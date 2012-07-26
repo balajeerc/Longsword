@@ -22,12 +22,25 @@ class MainCanvas(cocos.layer.ColorLayer):
         # is a subclass of pyglet.sprite.Sprite with the befits of
         # being a CocosNode
         plyrImage = pyglet.resource.image('professor.png')
-        animationSequence = pyglet.image.ImageGrid(plyrImage, 4, 9) 
-        sprite_anim = cocos.sprite.Sprite(pyglet.image.Animation.from_image_sequence(animationSequence, 0.1)) 
+        animationImageGrid = pyglet.image.ImageGrid(plyrImage, 4, 9) 
+        self.animationSequences = []
+        self.animationSequences.append(pyglet.image.Animation.from_image_sequence(animationImageGrid[0:8], 0.1, loop=False))
+        self.animationSequences.append(pyglet.image.Animation.from_image_sequence(animationImageGrid[9:17], 0.1, loop=False))
+        self.animationSequences.append(pyglet.image.Animation.from_image_sequence(animationImageGrid[18:26], 0.1, loop=False))        
+        self.animIndex = 0
+        self.spriteInst = cocos.sprite.Sprite(self.animationSequences[self.animIndex])
+        self.spriteInst.on_animation_end = self.registerAnimEnd        
         # sprite in the center of the screen (default is 0,0)
-        sprite_anim.position = 320,240        
-        self.add(sprite_anim,z=1)
-                
+        self.spriteInst.position = 320,240        
+        self.add(self.spriteInst,z=1)
+    
+    def registerAnimEnd(self):
+        print("Ending animation!")
+        self.animIndex = self.animIndex + 1
+        if self.animIndex >= len(self.animationSequences):
+            self.animIndex = 0
+        self.spriteInst.image = self.animationSequences[self.animIndex]    
+                    
     def initResources(self):
         resource_path_list = []
         currentDirectory = os.path.dirname(os.path.realpath(__file__))
@@ -39,6 +52,8 @@ class MainCanvas(cocos.layer.ColorLayer):
             print(rootFolder[rootFolder.find("assets"):])
         pyglet.resource.path = resource_path_list
         pyglet.resource.reindex()
+        
+        
         
 if __name__ == "__main__":
     # director init takes the same arguments as pyglet.window
