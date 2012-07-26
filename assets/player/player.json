@@ -1,0 +1,23 @@
+{
+	"isAnimated" : true,
+	
+	"image" : "professor.png",
+	
+	"imageGrid" : {
+
+		"rows" : 4,
+		"columns" : 9,
+		"timePerFrame" : 0.5
+	},
+	
+	"animations" : {
+		"walkLeft" : {"startFrame":0, "endFrame":8, "loop":true},
+		"walkRight" : {"startFrame":9, "endFrame":17, "timePerFrame":0.6},
+		"walkUp" : {"startFrame":18, "endFrame":26},
+		"walkDown" : {"startFrame":27, "endFrame":35}
+	},
+
+	"defaultFrame" : 0,
+	
+	"colliderExts" : [65,65]
+}
