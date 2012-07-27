@@ -19,6 +19,7 @@ import pyglet
 import cocos
 
 import entity
+import debug
 
 class Player(entity.Entity):
     """Main player for Longsword"""
@@ -26,7 +27,9 @@ class Player(entity.Entity):
     def __init__(self):
         super(Player,self).__init__()
         self.load("assets/player")
-                        
+        self.keyState = {key: False for key in ["W","A","S","D"]}
+        self.keyAxisState = [0.0,0.0]
+        self.speed = 100.0 #Speed of player movement, in pixels per second                   
     def registerEventHandlers(self,layer):
         """Sets up input handlers for the player
         
@@ -40,27 +43,28 @@ class Player(entity.Entity):
         layer.on_key_press = self.onKeyDown
         layer.on_key_release = self.onKeyUp        
         layer.on_mouse_motion = self.onMouseMove
-        layer.on_mouse_press = self.onMouseDown
-        
+        layer.on_mouse_press = self.onMouseDown        
     
     #Event handlers for player
     def onKeyDown(self, key, modifiers):
-        walkFactor = 10
         if key == 119:  #W key
-            self.playAnimation("walkUp")
-            self.translate(0,walkFactor)
+            self.keyState["W"] = True
         elif key == 97: #A key
-            self.playAnimation("walkLeft")
-            self.translate(-walkFactor,0)
+            self.keyState["A"] = True
         elif key == 115: #S key
-            self.playAnimation("walkDown")
-            self.translate(0,walkFactor*-1)
+            self.keyState["S"] = True
         elif key == 100: #D key
-            self.playAnimation("walkRight")
-            self.translate(walkFactor,0)
+            self.keyState["D"] = True
             
     def onKeyUp(self, key, modifiers):
-        self.stopAnimation()
+        if key == 119:  #W key
+            self.keyState["W"] = False
+        elif key == 97: #A key
+            self.keyState["A"] = False
+        elif key == 115: #S key
+            self.keyState["S"] = False
+        elif key == 100: #D key
+            self.keyState["D"] = False
     
     def onMouseMove(self, x, y, dx, dy):
         pass
@@ -68,4 +72,48 @@ class Player(entity.Entity):
     def onMouseDown(self, x, y, buttons, modifiers):
         pass
 
+    def updateKeyAxisState(self):
+        """Calculates the net direction in which the player must move
+        based on current keystate"""
+        self.keyAxisState[0] = 0.0
+        self.keyAxisState[1] = 0.0
+        if self.keyState["W"]:
+            self.keyAxisState[1] = self.keyAxisState[1]+1.0
+        if self.keyState["S"]:
+            self.keyAxisState[1] = self.keyAxisState[1]-1.0
+        if self.keyState["A"]:
+            self.keyAxisState[0] = self.keyAxisState[0]-1.0
+        if self.keyState["D"]:
+            self.keyAxisState[0] = self.keyAxisState[0]+1.0
+                                          
+    def update(self, timeSinceLastUpdate, *args, **kwargs):
+        #Call super class update
+        super(Player,self).update(timeSinceLastUpdate, *args, **kwargs)
         
+        self.updateKeyAxisState()
+        
+        debug.clearLog()
+        debug.log("Axis state - x:"+str(self.keyAxisState[0])+"; y:"+str(self.keyAxisState[1]))
+        
+        #First, based on input key state, we move the player around
+        self.sprite.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
+        self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate 
+        
+        #Play corresponding animation
+        #We have a certain priority ordering here
+        #If the player is moving up, even if he is moving to the left
+        #at the same time, the moving up animation is played
+        if self.keyAxisState[1] > 0.0 and not self.currentAnimation=="walkUp":
+            self.playAnimation("walkUp")
+        elif self.keyAxisState[1] < 0.0 and not self.currentAnimation=="walkDown":
+            self.playAnimation("walkDown")
+        elif self.keyAxisState[0] > 0.0 and not self.currentAnimation=="walkRight":
+            if not self.currentAnimation:
+                self.playAnimation("walkRight")
+        elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
+            if not self.currentAnimation:
+                self.playAnimation("walkLeft")
+        
+        if self.keyAxisState[0]==0.0 and self.keyAxisState[1]==0.0:
+            debug.log("Stopping animation!")
+            self.stopAnimation()

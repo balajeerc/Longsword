@@ -64,7 +64,11 @@ class GameManager():
         
     def startGame(self):
         """Starts running the game"""
-        self.player = player.Player()
+        self.debugText = cocos.text.Label("Hello", x=10, y=10,multiline=True)
+        
+        self.mainLayer.add(self.debugText)
+        
+        self.player = player.Player()        
         self.addEntity(self.player)
         self.player.registerEventHandlers(self.mainLayer)
         
