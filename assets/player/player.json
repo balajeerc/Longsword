@@ -7,17 +7,17 @@
 
 		"rows" : 4,
 		"columns" : 9,
-		"timePerFrame" : 0.5
+		"timePerFrame" : 0.1
 	},
 	
 	"animations" : {
-		"walkLeft" : {"startFrame":0, "endFrame":8, "loop":true},
-		"walkRight" : {"startFrame":9, "endFrame":17, "timePerFrame":0.6},
-		"walkUp" : {"startFrame":18, "endFrame":26},
-		"walkDown" : {"startFrame":27, "endFrame":35}
+		"walkUp" : {"startFrame":27, "endFrame":35, "loop":true},
+		"walkLeft" : {"startFrame":18, "endFrame":26, "timePerFrame":0.1, "loop":true},
+		"walkDown" : {"startFrame":9, "endFrame":17, "loop":true},
+		"walkRight" : {"startFrame":0, "endFrame":8, "loop":true}
 	},
 
-	"defaultFrame" : 0,
+	"defaultFrame" : 8,
 	
 	"colliderExts" : [65,65]
 }
