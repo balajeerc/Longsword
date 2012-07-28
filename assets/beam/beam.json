@@ -1,0 +1,5 @@
+{
+	"isAnimated" : false,	
+	"image" : "beam.png",		
+	"colliderExts" : [65,65]
+}
