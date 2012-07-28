@@ -2,10 +2,10 @@ Task List:
 ----------
 
 1. Implement the player character for now using static sprite sheet of a male silhouette.
-	i) Figure out how to do animate handle animated sprite sheets in cocos2d
-	 	-Load the sprite sheet containing the entire sheet into the scene and display a particular frame
-	 	-Read exported XML from some sprite sheet animation tool to parse animation sequence numbers
-	 	-Play a chosen animation by name	
+	i) Figure out how to do animate handle animated sprite sheets in cocos2d √
+	 	-Load the sprite sheet containing the entire sheet into the scene and display a particular frame √
+	 	-Read exported XML from some sprite sheet animation tool to parse animation sequence numbers √
+	 	-Play a chosen animation by name √	
 2. Setup finite state machine for the player - active, death, reeling, invulnerable states.
 3. Move player with W,A,S,D.
 4. Implement beam extending from player's origin to edge of screen - static sprite for now.

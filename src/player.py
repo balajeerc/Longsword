@@ -18,8 +18,10 @@
 import pyglet
 import cocos
 
+import gamemanager
 import entity
 import debug
+import beam
 
 class Player(entity.Entity):
     """Main player for Longsword"""
@@ -29,7 +31,11 @@ class Player(entity.Entity):
         self.load("assets/player")
         self.keyState = {key: False for key in ["W","A","S","D"]}
         self.keyAxisState = [0.0,0.0]
-        self.speed = 100.0 #Speed of player movement, in pixels per second                   
+        self.speed = 100.0 #Speed of player movement, in pixels per second
+        self.lastKeyPressed = None
+        self.beam = beam.Beam()
+        gamemanager.GameManager.getInstance().addEntity(self.beam)
+                       
     def registerEventHandlers(self,layer):
         """Sets up input handlers for the player
         
@@ -47,16 +53,22 @@ class Player(entity.Entity):
     
     #Event handlers for player
     def onKeyDown(self, key, modifiers):
+        """Key down handler"""
         if key == 119:  #W key
             self.keyState["W"] = True
+            self.lastKeyPressed = "W"
         elif key == 97: #A key
             self.keyState["A"] = True
+            self.lastKeyPressed = "A"
         elif key == 115: #S key
             self.keyState["S"] = True
+            self.lastKeyPressed = "S"
         elif key == 100: #D key
             self.keyState["D"] = True
+            self.lastKeyPressed = "D"
             
     def onKeyUp(self, key, modifiers):
+        """Key up handler"""
         if key == 119:  #W key
             self.keyState["W"] = False
         elif key == 97: #A key
@@ -87,22 +99,33 @@ class Player(entity.Entity):
             self.keyAxisState[0] = self.keyAxisState[0]+1.0
                                           
     def update(self, timeSinceLastUpdate, *args, **kwargs):
+        """Update method for the player character in Longsword
+        
+        Keyword arguments:
+        timeSinceLastUpdate -- time elapsed since the last time this update was called
+        args -- list of arguments to this update method
+        kwargs --         
+        """ 
         #Call super class update
-        super(Player,self).update(timeSinceLastUpdate, *args, **kwargs)
-        
-        self.updateKeyAxisState()
-        
-        debug.clearLog()
-        debug.log("Axis state - x:"+str(self.keyAxisState[0])+"; y:"+str(self.keyAxisState[1]))
-        
+        super(Player,self).update(timeSinceLastUpdate, *args, **kwargs)        
+        self.updateKeyAxisState()       
         #First, based on input key state, we move the player around
         self.sprite.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
-        self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate 
-        
+        self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate         
         #Play corresponding animation
         #We have a certain priority ordering here
         #If the player is moving up, even if he is moving to the left
         #at the same time, the moving up animation is played
+        if self.keyAxisState[0]==0.0 and self.keyAxisState[1]==0.0:
+            self.stopAnimation()
+        
+        if self.keyAxisState[0]==0.0:
+            if self.currentAnimation=="walkLeft" or self.currentAnimation=="walkRight":
+                self.stopAnimation()
+        if self.keyAxisState[1]==0.0:
+            if self.currentAnimation=="walkUp" or self.currentAnimation=="walkDown":
+                self.stopAnimation()                
+        
         if self.keyAxisState[1] > 0.0 and not self.currentAnimation=="walkUp":
             self.playAnimation("walkUp")
         elif self.keyAxisState[1] < 0.0 and not self.currentAnimation=="walkDown":
@@ -112,8 +135,4 @@ class Player(entity.Entity):
                 self.playAnimation("walkRight")
         elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
             if not self.currentAnimation:
-                self.playAnimation("walkLeft")
-        
-        if self.keyAxisState[0]==0.0 and self.keyAxisState[1]==0.0:
-            debug.log("Stopping animation!")
-            self.stopAnimation()
+                self.playAnimation("walkLeft")        

@@ -64,7 +64,7 @@ class GameManager():
         
     def startGame(self):
         """Starts running the game"""
-        self.debugText = cocos.text.Label("Hello", x=10, y=10,multiline=True)
+        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)
         
         self.mainLayer.add(self.debugText)
         
