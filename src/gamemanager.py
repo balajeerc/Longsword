@@ -20,8 +20,14 @@ import os
 import pyglet
 import cocos
 
+import tiled2cocos
+
 import entity
 import player
+
+#from cocos import tiles
+#from cocos.director import director
+#from cocos.scene import Scene
 
 class GameManager():
     """Game manager for Longsword. Entry point of all game synchronisation"""
@@ -32,11 +38,15 @@ class GameManager():
         #Initialise the cocos system
         cocos.director.director.init()
         #Create the layer into which we'll be adding our sprites
-        self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
+        #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
+        self.mainLayer = tiled2cocos.load_map('assets/maps/default.tmx')
+        #Create a scrolling map manager
+        self.scrollingManager = cocos.tiles.ScrollingManager()
+        self.scrollingManager.add(self.mainLayer)
         #Make sure that this layer receives input events
         self.mainLayer.is_event_handler = True
         #Create the main scene
-        self.mainScene = cocos.scene.Scene(self.mainLayer)
+        self.mainScene = cocos.scene.Scene(self.scrollingManager)
         #Initialise resource paths
         self.initResources()
         GameManager.singletonInstance = self
@@ -76,6 +86,9 @@ class GameManager():
         
     def getMainLayer(self):
         return self.mainLayer    
+    
+    def getScrollingManager(self):
+        return self.scrollingManager
     
     def addEntity(self,entity,layer=None):
         if layer:

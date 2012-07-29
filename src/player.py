@@ -136,3 +136,5 @@ class Player(entity.Entity):
         elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
             if not self.currentAnimation:
                 self.playAnimation("walkLeft")        
+
+        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(*self.sprite.position)        
