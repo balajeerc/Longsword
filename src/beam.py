@@ -26,12 +26,8 @@ class Beam(entity.Entity):
 
     def __init__(self):
         super(Beam,self).__init__()
+        self.zval = 2 #To make sure that the beam is in front of player
         self.load("assets/beam")
-#        self.beamTiledImage = pyglet.image.TileableTexture.create_for_image(self.image)
-##        self.beamTiledImage.blit_tiled(0.0, 0.0, 0.0, 300, 12)
-#        self.beamTiledImage = pyglet.image.Texture.create(128, 32)
-#        self.beamTiledImage.blit_into(self.image, 0, 0, 1)
-#        self.beamTiledImage.blit_into(self.image, 33, 0, 1)
-#        self.beamTiledImage.blit_into(self.image, 65, 0, 1)                
-#        self.sprite = cocos.sprite.Sprite(self.beamTiledImage)    
-#        self.sprite.position = 320,180    
+        print("beam anchor- x:" + str(self.sprite.transform_anchor_x) + 
+                            " y: " + str(self.sprite.transform_anchor_y))
+        self.sprite.transform_anchor_x -= self.sprite.get_rect().width*0.5     

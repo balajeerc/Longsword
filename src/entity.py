@@ -34,7 +34,7 @@ class Entity(object):
 		self.isAnimated = False #Indicates if this entity is animated
 		self.colliderExts = [0.0,0.0] #extents of this entity's collider
 		self.currentAnimation = None #Animation currently in progress
-		
+		self.zval = 1 #Z value in layer being added to
 	def load(self, path):
 		"""Loads a sprite animation from specified directory path. 
 		
@@ -145,7 +145,7 @@ class Entity(object):
 	
 	def register(self, gameLayer):
 		"""Registers this entity with the specified layer"""
-		gameLayer.add(self.sprite,z=1)
+		gameLayer.add(self.sprite,self.zval)
 		
 	def update(self, timeSinceLastUpdate, *args, **kwargs):
 		#print("Callback occurred at: " + str(timeSinceLastUpdate))
@@ -159,5 +159,16 @@ class Entity(object):
 		y -- displacement along y direction
 		
 		"""
-		action = cocos.actions.interval_actions.MoveBy((x,y),0.5)
-		self.sprite.do( action )
+		self.sprite.x += x
+		self.sprite.y += y
+		
+	def moveTo(self, x, y):
+		"""Moves the entity to specified coordinates
+		
+		Keyword arguments:
+		x -- x position of the entitiy
+		y -- y position of the entity
+		
+		"""
+		self.sprite.x = x
+		self.sprite.y = y	

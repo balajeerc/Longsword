@@ -35,6 +35,7 @@ class Player(entity.Entity):
         self.lastKeyPressed = None
         self.beam = beam.Beam()
         gamemanager.GameManager.getInstance().addEntity(self.beam)
+        self.rotationRate = 0.5
                        
     def registerEventHandlers(self,layer):
         """Sets up input handlers for the player
@@ -79,8 +80,16 @@ class Player(entity.Entity):
             self.keyState["D"] = False
     
     def onMouseMove(self, x, y, dx, dy):
-        pass
-    
+        currRotation = self.beam.sprite.rotation
+        currRotation += (dy)*self.rotationRate*-1
+        if currRotation > 70.0:
+            currRotation = 70;
+        if currRotation < -70.0:
+            currRotation = 70.0 
+        self.beam.sprite.rotation = currRotation   
+#        debug.clearLog()
+#        debug.log("rotation: "+str(self.beam.sprite.rotation))
+        
     def onMouseDown(self, x, y, buttons, modifiers):
         pass
 
@@ -110,31 +119,53 @@ class Player(entity.Entity):
         super(Player,self).update(timeSinceLastUpdate, *args, **kwargs)        
         self.updateKeyAxisState()       
         #First, based on input key state, we move the player around
-        self.sprite.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
-        self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate         
+        #self.sprite.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
+        #self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate         
+        self.translate(self.keyAxisState[0]*self.speed*timeSinceLastUpdate, 
+                       self.keyAxisState[1]*self.speed*timeSinceLastUpdate)
+        
         #Play corresponding animation
         #We have a certain priority ordering here
         #If the player is moving up, even if he is moving to the left
         #at the same time, the moving up animation is played
         if self.keyAxisState[0]==0.0 and self.keyAxisState[1]==0.0:
             self.stopAnimation()
-        
-        if self.keyAxisState[0]==0.0:
-            if self.currentAnimation=="walkLeft" or self.currentAnimation=="walkRight":
-                self.stopAnimation()
-        if self.keyAxisState[1]==0.0:
-            if self.currentAnimation=="walkUp" or self.currentAnimation=="walkDown":
-                self.stopAnimation()                
-        
-        if self.keyAxisState[1] > 0.0 and not self.currentAnimation=="walkUp":
-            self.playAnimation("walkUp")
-        elif self.keyAxisState[1] < 0.0 and not self.currentAnimation=="walkDown":
-            self.playAnimation("walkDown")
-        elif self.keyAxisState[0] > 0.0 and not self.currentAnimation=="walkRight":
+        else:
             if not self.currentAnimation:
                 self.playAnimation("walkRight")
-        elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
-            if not self.currentAnimation:
-                self.playAnimation("walkLeft")        
-
-        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(*self.sprite.position)        
+        
+#        if self.keyAxisState[0]==0.0:
+#            if self.currentAnimation=="walkLeft" or self.currentAnimation=="walkRight":
+#                self.stopAnimation()
+#        if self.keyAxisState[1]==0.0:
+#            if self.currentAnimation=="walkUp" or self.currentAnimation=="walkDown":
+#                self.stopAnimation()                
+        
+#        if self.keyAxisState[1] > 0.0 and not self.currentAnimation=="walkUp":
+#            self.playAnimation("walkUp")
+#        elif self.keyAxisState[1] < 0.0 and not self.currentAnimation=="walkDown":
+#            self.playAnimation("walkDown")
+#        elif self.keyAxisState[0] > 0.0 and not self.currentAnimation=="walkRight":
+#            if not self.currentAnimation:
+#                self.playAnimation("walkRight")
+#        elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
+#            if not self.currentAnimation:
+#                self.playAnimation("walkLeft")
+        focus_pt_x = self.sprite.x + 270
+        focus_pt_y = 320
+        
+        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(focus_pt_x,focus_pt_y)
+        
+        #Now handle the mouse moves so that the beam is rotated
+        #We start by aligning the beam to the player's hand
+        beamRect = self.beam.sprite.get_rect()
+        
+        offset = [0.0,0.0]
+        if self.currentAnimation:
+            offset = [-5,1]
+        else:
+            offset = [-4,2]
+        self.beam.moveTo(self.sprite.x+beamRect.width*0.5+offset[0],
+                          self.sprite.y-beamRect.height*0.5+offset[1])
+        
+        

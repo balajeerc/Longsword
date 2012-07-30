@@ -39,7 +39,7 @@ class GameManager():
         cocos.director.director.init()
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
-        self.mainLayer = tiled2cocos.load_map('assets/maps/default.tmx')
+        self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
         #Create a scrolling map manager
         self.scrollingManager = cocos.tiles.ScrollingManager()
         self.scrollingManager.add(self.mainLayer)
@@ -74,8 +74,7 @@ class GameManager():
         
     def startGame(self):
         """Starts running the game"""
-        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)
-        
+        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)        
         self.mainLayer.add(self.debugText)
         
         self.player = player.Player()        
