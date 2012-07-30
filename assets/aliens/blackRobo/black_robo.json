@@ -3,7 +3,7 @@
 	
 	"isCollider" : true,
 	
-	"image" : "professorEdited.png",
+	"image" : "black_robo.png",
 	
 	"imageGrid" : {
 
@@ -19,7 +19,7 @@
 		"walkRight" : {"startFrame":0, "endFrame":8, "loop":true}
 	},
 
-	"defaultFrame" : 8,
+	"defaultFrame" : 18,
 	
 	"colliderExts" : [65,65]
 }

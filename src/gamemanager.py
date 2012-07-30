@@ -19,6 +19,7 @@ import os
 
 import pyglet
 import cocos
+from cocos import collision_model
 
 import tiled2cocos
 
@@ -36,7 +37,7 @@ class GameManager():
     
     def __init__(self):
         #Initialise the cocos system
-        cocos.director.director.init()
+        cocos.director.director.init(width=640, height=480)
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
         self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
@@ -47,6 +48,12 @@ class GameManager():
         self.mainLayer.is_event_handler = True
         #Create the main scene
         self.mainScene = cocos.scene.Scene(self.scrollingManager)
+        #Create a list to store all entities in scene
+        self.entityList = []
+        #Create a collision manager to respond to collisions
+        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 1200, 0, 480, 128, 128)
+        #Schedule updates at 16 fps on this manager
+        self.mainLayer.schedule(self.update)
         #Initialise resource paths
         self.initResources()
         GameManager.singletonInstance = self
@@ -81,8 +88,14 @@ class GameManager():
         self.addEntity(self.player)
         self.player.registerEventHandlers(self.mainLayer)
         
+        #Test collision with black robot
+        blackRobo = entity.Entity()
+        blackRobo.load('assets/aliens/blackRobo')
+        blackRobo.moveTo(640, 320)
+        self.addEntity(blackRobo, self.mainLayer)
+
         cocos.director.director.run(self.mainScene)
-        
+                
     def getMainLayer(self):
         return self.mainLayer    
     
@@ -90,7 +103,30 @@ class GameManager():
         return self.scrollingManager
     
     def addEntity(self,entity,layer=None):
+        self.entityList.append(entity)
         if layer:
             entity.register(layer)
         else:
-            entity.register(self.mainLayer)          
+            entity.register(self.mainLayer)
+            
+    def update(self, timeSinceLastUpdate, *args, **kwargs):
+        #We start by clearing the collision manager
+        self.collisionManager.clear()
+        #As required by the Cocos collision API, we now add all the
+        #collider entities into it again
+        for entity in self.entityList:
+            if entity.isCollider:
+                self.collisionManager.add(entity)
+        #Handle all collisions between entities
+        for entity, otherObject in self.collisionManager.iter_all_collisions():
+            entity.notifyCollision(otherObject)
+        #Now we update the game logic for the entities        
+        for entity in self.entityList:
+            if entity.isCollider:
+                entity.update(timeSinceLastUpdate, args, kwargs)
+        #Finally, we handle the post collision check updates for the
+        #entities    
+        for entity in self.entityList:
+            if entity.isCollider:
+                entity.updateCollision()
+            

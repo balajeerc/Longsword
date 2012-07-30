@@ -1,5 +1,6 @@
 {
-	"isAnimated" : false,	
+	"isAnimated" : false,
+	"isCollider" : false,
 	"image" : "beam.png",		
 	"colliderExts" : [65,65]
 }

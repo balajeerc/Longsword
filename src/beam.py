@@ -28,6 +28,5 @@ class Beam(entity.Entity):
         super(Beam,self).__init__()
         self.zval = 2 #To make sure that the beam is in front of player
         self.load("assets/beam")
-        print("beam anchor- x:" + str(self.sprite.transform_anchor_x) + 
-                            " y: " + str(self.sprite.transform_anchor_y))
-        self.sprite.transform_anchor_x -= self.sprite.get_rect().width*0.5     
+        self.sprite.transform_anchor_x -= self.sprite.get_rect().width*0.5
+        #We need to compose the beam     

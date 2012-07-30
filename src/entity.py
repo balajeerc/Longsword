@@ -20,6 +20,7 @@ import json
 
 import pyglet
 import cocos
+from cocos import collision_model
 
 class Entity(object):
 	"""An entity in Longsword"""
@@ -35,6 +36,11 @@ class Entity(object):
 		self.colliderExts = [0.0,0.0] #extents of this entity's collider
 		self.currentAnimation = None #Animation currently in progress
 		self.zval = 1 #Z value in layer being added to
+		self.life = 1000.0
+		self.isCollider = False
+		self.cshape = None
+		self.collidingEntities = []
+		
 	def load(self, path):
 		"""Loads a sprite animation from specified directory path. 
 		
@@ -90,12 +96,18 @@ class Entity(object):
 			self.sprite = cocos.sprite.Sprite(self.defaultFrame)
 		else:
 			self.sprite = cocos.sprite.Sprite(self.image)	
-				
-		self.colliderExts = entityData["colliderExts"][0],entityData["colliderExts"][1]		
-		self.sprite.schedule_interval(self.update,0.02)
+					
+		#self.sprite.schedule_interval(self.update,0.02)
 		self.sprite.position = 320,240
 		self.sprite.on_animation_end = self.registerAnimationEnd
 		
+		if entityData["isCollider"]:
+			self.isCollider = True		
+			self.colliderExts = entityData["colliderExts"][0],entityData["colliderExts"][1]
+			self.cshape = collision_model.AARectShape(self.sprite.position,
+													 self.sprite.width*0.5,
+													 self.sprite.height*0.5)
+
 	def playAnimation(self, animationName):
 		"""Plays a particular animation sequence
 		
@@ -151,6 +163,18 @@ class Entity(object):
 		#print("Callback occurred at: " + str(timeSinceLastUpdate))
 		pass
 	
+	def updateCollision(self):
+		"""Updates the colllision shape, after the game logic phase of game update"""
+		self.collidingEntities[:] = []
+		if self.isCollider:
+			self.cshape.center = self.sprite.position
+	
+	def notifyCollision(self,other):
+		"""Updates the collision lists for colliders"""
+		if self.isCollider:
+			self.collidingEntities.append(other)
+		print(self.entityName + " collided with " + other.entityName)	
+	
 	def translate(self, x, y):
 		"""Translates the given entity by specified amount
 		
@@ -161,6 +185,8 @@ class Entity(object):
 		"""
 		self.sprite.x += x
 		self.sprite.y += y
+		if self.isCollider:
+			self.cshape.center = self.sprite.position
 		
 	def moveTo(self, x, y):
 		"""Moves the entity to specified coordinates
@@ -171,4 +197,6 @@ class Entity(object):
 		
 		"""
 		self.sprite.x = x
-		self.sprite.y = y	
+		self.sprite.y = y		
+		if self.isCollider:
+			self.cshape.center = self.sprite.position	
