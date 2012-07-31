@@ -133,24 +133,6 @@ class Player(entity.Entity):
         else:
             if not self.currentAnimation:
                 self.playAnimation("walkRight")
-        
-#        if self.keyAxisState[0]==0.0:
-#            if self.currentAnimation=="walkLeft" or self.currentAnimation=="walkRight":
-#                self.stopAnimation()
-#        if self.keyAxisState[1]==0.0:
-#            if self.currentAnimation=="walkUp" or self.currentAnimation=="walkDown":
-#                self.stopAnimation()                
-        
-#        if self.keyAxisState[1] > 0.0 and not self.currentAnimation=="walkUp":
-#            self.playAnimation("walkUp")
-#        elif self.keyAxisState[1] < 0.0 and not self.currentAnimation=="walkDown":
-#            self.playAnimation("walkDown")
-#        elif self.keyAxisState[0] > 0.0 and not self.currentAnimation=="walkRight":
-#            if not self.currentAnimation:
-#                self.playAnimation("walkRight")
-#        elif self.keyAxisState[0] < 0.0 and not self.currentAnimation=="walkLeft":
-#            if not self.currentAnimation:
-#                self.playAnimation("walkLeft")
         focus_pt_x = self.sprite.x + 270
         focus_pt_y = 320
         
@@ -167,5 +149,11 @@ class Player(entity.Entity):
             offset = [-4,2]
         self.beam.moveTo(self.sprite.x+beamRect.width*0.5+offset[0],
                           self.sprite.y-beamRect.height*0.5+offset[1])
+                
+    def notifyCollision(self,other):
+        """Updates the collision lists for colliders"""
+        super(Player,self).notifyCollision(other)
+        print(self.entityName + " collided with " + other.entityName)    
+        
         
         

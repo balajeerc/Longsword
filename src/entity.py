@@ -36,10 +36,12 @@ class Entity(object):
 		self.colliderExts = [0.0,0.0] #extents of this entity's collider
 		self.currentAnimation = None #Animation currently in progress
 		self.zval = 1 #Z value in layer being added to
-		self.life = 1000.0
-		self.isCollider = False
-		self.cshape = None
-		self.collidingEntities = []
+		self.life = 1000.0 #Life for this entity
+		self.isCollider = False #Indicates if this entity responds to collisions
+		self.cshape = None #Collision shape for this entity
+		self.collidingEntities = []	#List of entities that collided with this one at a given update
+		self.boundLines = [] #List of lines used to debug draw this entity's bounds	
+		self.boundsVisible = False #Boolean used to switch on and off the drawing of bounds
 		
 	def load(self, path):
 		"""Loads a sprite animation from specified directory path. 
@@ -107,7 +109,32 @@ class Entity(object):
 			self.cshape = collision_model.AARectShape(self.sprite.position,
 													 self.sprite.width*0.5,
 													 self.sprite.height*0.5)
+			self.boundLines = [cocos.draw.Line((0,0),(100,100),(255,255,255,255))]*4
+			for line in self.boundLines:
+				line.visible = True
+	
+	def register(self, gameLayer):
+		"""Registers this entity with the specified layer"""
+		gameLayer.add(self.sprite,self.zval)
+		if self.isCollider:
+			for line in self.boundLines:
+				gameLayer.add(line)
+		
+	def update(self, timeSinceLastUpdate, *args, **kwargs):
+		"""Update method repeatedly called on the entity"""
+		#print("Callback occurred at: " + str(timeSinceLastUpdate))
+		pass
 
+	def registerAnimationEnd(self):
+		if not self.currentAnimation:
+			raise Exception("Received animation end notification though there is no animation playing!" +
+								" Something is amiss!")
+		#Check if the current animation is a looping animation
+		#If so, we must ignore the animation end notification	
+		#If not, we register the animation end
+		if not self.animations[self.currentAnimation][1]:	
+			self.currentAnimation = None
+			
 	def playAnimation(self, animationName):
 		"""Plays a particular animation sequence
 		
@@ -120,17 +147,7 @@ class Entity(object):
 								animationName + " registered.")
 		self.sprite.image = self.animations[animationName][0]
 		self.currentAnimation = animationName
-	
-	def registerAnimationEnd(self):
-		if not self.currentAnimation:
-			raise Exception("Received animation end notification though there is no animation playing!" +
-								" Something is amiss!")
-		#Check if the current animation is a looping animation
-		#If so, we must ignore the animation end notification	
-		#If not, we register the animation end
-		if not self.animations[self.currentAnimation][1]:	
-			self.currentAnimation = None
-			
+				
 	def isAnimationPlaying(self, animationName=None):
 		"""Checks if a particular animation is playing. Returns boolean indicating same.
 		If no animationName has been specified, it returns a boolean indicating if any
@@ -150,30 +167,18 @@ class Entity(object):
 		"""Stops the animation currently in progress and goes to the default frame"""
 		self.currentAnimation = None
 		self.sprite.image = self.defaultFrame
-	
-	def onCollision(self):
-		"""Handles collisions with other entities"""
-		pass
-	
-	def register(self, gameLayer):
-		"""Registers this entity with the specified layer"""
-		gameLayer.add(self.sprite,self.zval)
-		
-	def update(self, timeSinceLastUpdate, *args, **kwargs):
-		#print("Callback occurred at: " + str(timeSinceLastUpdate))
-		pass
-	
+			
 	def updateCollision(self):
 		"""Updates the colllision shape, after the game logic phase of game update"""
 		self.collidingEntities[:] = []
 		if self.isCollider:
 			self.cshape.center = self.sprite.position
+			self.updateBounds()
 	
 	def notifyCollision(self,other):
 		"""Updates the collision lists for colliders"""
 		if self.isCollider:
 			self.collidingEntities.append(other)
-		print(self.entityName + " collided with " + other.entityName)	
 	
 	def translate(self, x, y):
 		"""Translates the given entity by specified amount
@@ -185,9 +190,7 @@ class Entity(object):
 		"""
 		self.sprite.x += x
 		self.sprite.y += y
-		if self.isCollider:
-			self.cshape.center = self.sprite.position
-		
+			
 	def moveTo(self, x, y):
 		"""Moves the entity to specified coordinates
 		
@@ -198,5 +201,54 @@ class Entity(object):
 		"""
 		self.sprite.x = x
 		self.sprite.y = y		
-		if self.isCollider:
-			self.cshape.center = self.sprite.position	
+
+	def rotateBy(self,angle):
+		"""Rotates this entity by specified angle
+		
+		Keyword arguments:
+		angle -- angle by which this entity must be rotated
+		"""
+		self.sprite.rotation += angle
+			
+	def rotateTo(self,angle):
+		"""Sets the angle of rotation for this sprite
+		
+		Keyword arguments:
+		angle -- angle that this entity's rotation must be set to
+		"""
+		self.sprite.rotation = angle
+			
+	def showBounds(self,show=True):
+		"""Shows or hides the bounds of this entity
+		
+		Keyword arguments:
+		show -- boolean indicating whether the bounds must be shown or hidden
+		"""
+		for line in self.boundLines:
+			line.visible = show
+		self.boundsVisible = show	
+	
+	def updateBounds(self):
+		"""Updates the lines used to debug draw the bounds of this entity"""		
+		#If the bounds are not visible, we dont bother updating
+		#the coordinates
+		if not self.boundsVisible:
+			return		
+		minmax = self.cshape.minmax()
+		minx = minmax[0]
+		maxx = minmax[1]
+		miny = minmax[2]
+		maxy = minmax[3]		
+		verts = []
+		verts.append(cocos.euclid.Vector2(minx,miny))
+		verts.append(cocos.euclid.Vector2(maxx,miny))
+		verts.append(cocos.euclid.Vector2(maxx,maxy))
+		verts.append(cocos.euclid.Vector2(minx,maxy))		
+		self.boundLines[0].start = verts[0]
+		self.boundLines[0].end = verts[1]		
+		self.boundLines[1].start = verts[1]
+		self.boundLines[1].end = verts[2]		
+		self.boundLines[2].start = verts[2]
+		self.boundLines[2].end = verts[3]		
+		self.boundLines[3].start = verts[3]
+		self.boundLines[3].end = verts[0]

@@ -81,17 +81,19 @@ class GameManager():
         
     def startGame(self):
         """Starts running the game"""
-        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)        
+        self.debugText = cocos.text.Label("Logging...", x=10, y=10,multiline=True)     
         self.mainLayer.add(self.debugText)
         
         self.player = player.Player()        
         self.addEntity(self.player)
         self.player.registerEventHandlers(self.mainLayer)
+        self.player.showBounds(True)
         
         #Test collision with black robot
         blackRobo = entity.Entity()
         blackRobo.load('assets/aliens/blackRobo')
         blackRobo.moveTo(640, 320)
+        blackRobo.showBounds(True)
         self.addEntity(blackRobo, self.mainLayer)
 
         cocos.director.director.run(self.mainScene)
@@ -112,14 +114,27 @@ class GameManager():
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
         self.collisionManager.clear()
+        
         #As required by the Cocos collision API, we now add all the
         #collider entities into it again
         for entity in self.entityList:
             if entity.isCollider:
                 self.collisionManager.add(entity)
+        #Beam is handled in a special way, using a string of circular subcolliders
+        #along its length. 
+        self.player.beam.addToCollisionManager(self.collisionManager)
+                
         #Handle all collisions between entities
-        for entity, otherObject in self.collisionManager.iter_all_collisions():
-            entity.notifyCollision(otherObject)
+        for firstObject, secondObject in self.collisionManager.iter_all_collisions():
+            if firstObject.isCollider:
+                firstObject.notifyCollision(secondObject)
+            elif firstObject.beamSubCollider:
+                self.player.beam.notifyCollision(secondObject)            
+            if secondObject.isCollider:
+                secondObject.notifyCollision(firstObject)
+            elif secondObject.beamSubCollider:    
+                self.player.beam.notifyCollision(firstObject)
+                        
         #Now we update the game logic for the entities        
         for entity in self.entityList:
             if entity.isCollider:

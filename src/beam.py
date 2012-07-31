@@ -17,10 +17,18 @@
 
 import pyglet
 import cocos
+from cocos import collision_model
 
 import entity
 import debug
+import math
 
+class BeamSubCollider():
+    def __init__(self,center,radius):
+        self.cshape = cocos.collision_model.CircleShape(center,radius)
+        self.beamSubCollider = True
+        self.entityName = "beamCollider"
+        
 class Beam(entity.Entity):
     """Player's beam for Longsword"""
 
@@ -29,4 +37,26 @@ class Beam(entity.Entity):
         self.zval = 2 #To make sure that the beam is in front of player
         self.load("assets/beam")
         self.sprite.transform_anchor_x -= self.sprite.get_rect().width*0.5
-        #We need to compose the beam     
+        #We need to compose the beam of various smaller spheres along the
+        #the beam so that it can test collision with enemies
+        self.subColliders = []
+        numSubColliders = int(self.sprite.width/20)+1
+        for i in range(numSubColliders):
+            center = self.sprite.position
+            radius = 10
+            collider = BeamSubCollider(center,radius)
+            self.subColliders.append(collider)
+        self.updateColliderPositions()       
+        
+    def updateColliderPositions(self):
+        beamOrigin = self.sprite.transform_anchor_x
+        cosRot = math.cos(self.sprite.rotation*math.pi/180.0)
+        sinRot = math.sin(self.sprite.rotation*math.pi/180.0)
+        for i in range(len(self.subColliders)):
+            pos = cocos.euclid.Vector2(beamOrigin+i*10*cosRot,
+                                       beamOrigin+i*10*sinRot)
+            self.subColliders[i].center = pos
+            
+    def addToCollisionManager(self,collisionManager):
+        for collider in self.subColliders:
+            collisionManager.add(collider)    
