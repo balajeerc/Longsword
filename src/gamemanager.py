@@ -37,7 +37,7 @@ class GameManager():
     
     def __init__(self):
         #Initialise the cocos system
-        cocos.director.director.init(width=640, height=480)
+        cocos.director.director.init(width=640, height=512)
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
         self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
@@ -81,7 +81,7 @@ class GameManager():
         
     def startGame(self):
         """Starts running the game"""
-        self.debugText = cocos.text.Label("Logging...", x=10, y=10,multiline=True)     
+        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)     
         self.mainLayer.add(self.debugText)
         
         self.player = player.Player()        
@@ -90,9 +90,8 @@ class GameManager():
         self.player.showBounds(True)
         
         #Test collision with black robot
-        blackRobo = entity.Entity()
+        blackRobo = entity.Entity(spawnPt = cocos.euclid.Vector2(640,320))
         blackRobo.load('assets/aliens/blackRobo')
-        blackRobo.moveTo(640, 320)
         blackRobo.showBounds(True)
         self.addEntity(blackRobo, self.mainLayer)
 
@@ -142,6 +141,6 @@ class GameManager():
         #Finally, we handle the post collision check updates for the
         #entities    
         for entity in self.entityList:
-            if entity.isCollider:
+            if entity.isCollider or entity.isBeam:
                 entity.updateCollision()
             

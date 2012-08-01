@@ -25,7 +25,7 @@ from cocos import collision_model
 class Entity(object):
 	"""An entity in Longsword"""
 	
-	def __init__(self, replicateFrom=None):
+	def __init__(self, replicateFrom=None,spawnPt=cocos.euclid.Vector2(0,0)):
 		self.sprite = None	#sprite used to visually depict this entity
 		self.image = None #pyglet image object used to represent this entity
 		self.imageGrid = None #a grid containing this entity's animation frames
@@ -42,6 +42,7 @@ class Entity(object):
 		self.collidingEntities = []	#List of entities that collided with this one at a given update
 		self.boundLines = [] #List of lines used to debug draw this entity's bounds	
 		self.boundsVisible = False #Boolean used to switch on and off the drawing of bounds
+		self.spawnPt = spawnPt
 		
 	def load(self, path):
 		"""Loads a sprite animation from specified directory path. 
@@ -100,18 +101,26 @@ class Entity(object):
 			self.sprite = cocos.sprite.Sprite(self.image)	
 					
 		#self.sprite.schedule_interval(self.update,0.02)
-		self.sprite.position = 320,240
+		self.sprite.position = self.spawnPt
 		self.sprite.on_animation_end = self.registerAnimationEnd
 		
 		if entityData["isCollider"]:
 			self.isCollider = True		
 			self.colliderExts = entityData["colliderExts"][0],entityData["colliderExts"][1]
-			self.cshape = collision_model.AARectShape(self.sprite.position,
-													 self.sprite.width*0.5,
-													 self.sprite.height*0.5)
-			self.boundLines = [cocos.draw.Line((0,0),(100,100),(255,255,255,255))]*4
+#			self.cshape = collision_model.AARectShape(self.sprite.position,
+#													 self.sprite.width*0.5,
+#													 self.sprite.height*0.5)
+			self.cshape = collision_model.CircleShape(cocos.euclid.Vector2(self.sprite.position[0],self.sprite.position[1]),
+													  self.sprite.width*0.5)
+			#self.boundLines = [cocos.draw.Line((0,0),(100,100),(255,255,255,255))]*4
+			self.boundLines = []
+			for i in range(4):
+				self.boundLines.append(cocos.draw.Line((0,0),(100,100),(255,255,255,255)))
 			for line in self.boundLines:
 				line.visible = True
+			self.boundsVisible = True	
+			self.updateBounds()	
+			self.boundsVisible = False
 	
 	def register(self, gameLayer):
 		"""Registers this entity with the specified layer"""
@@ -172,7 +181,7 @@ class Entity(object):
 		"""Updates the colllision shape, after the game logic phase of game update"""
 		self.collidingEntities[:] = []
 		if self.isCollider:
-			self.cshape.center = self.sprite.position
+			self.cshape.center = cocos.euclid.Vector2(self.sprite.x,self.sprite.y)
 			self.updateBounds()
 	
 	def notifyCollision(self,other):
@@ -233,7 +242,7 @@ class Entity(object):
 		#If the bounds are not visible, we dont bother updating
 		#the coordinates
 		if not self.boundsVisible:
-			return		
+			return
 		minmax = self.cshape.minmax()
 		minx = minmax[0]
 		maxx = minmax[1]
@@ -243,12 +252,17 @@ class Entity(object):
 		verts.append(cocos.euclid.Vector2(minx,miny))
 		verts.append(cocos.euclid.Vector2(maxx,miny))
 		verts.append(cocos.euclid.Vector2(maxx,maxy))
-		verts.append(cocos.euclid.Vector2(minx,maxy))		
+		verts.append(cocos.euclid.Vector2(minx,maxy))
 		self.boundLines[0].start = verts[0]
 		self.boundLines[0].end = verts[1]		
 		self.boundLines[1].start = verts[1]
-		self.boundLines[1].end = verts[2]		
+		self.boundLines[1].end = verts[2]
 		self.boundLines[2].start = verts[2]
 		self.boundLines[2].end = verts[3]		
 		self.boundLines[3].start = verts[3]
 		self.boundLines[3].end = verts[0]
+		color = (255,255,255,255)
+		if len(self.collidingEntities)>0:
+			color = cocos.euclid.Vector4(255,0,0,255)
+		for line in self.boundLines:
+			line.color = color

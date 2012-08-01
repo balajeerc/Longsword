@@ -34,6 +34,7 @@ class Player(entity.Entity):
         self.speed = 100.0 #Speed of player movement, in pixels per second
         self.lastKeyPressed = None
         self.beam = beam.Beam()
+        self.beam.showBounds(True)
         gamemanager.GameManager.getInstance().addEntity(self.beam)
         self.rotationRate = 0.5
                        
@@ -86,7 +87,7 @@ class Player(entity.Entity):
             currRotation = 70;
         if currRotation < -70.0:
             currRotation = 70.0 
-        self.beam.sprite.rotation = currRotation   
+        self.beam.rotateTo(currRotation)   
 #        debug.clearLog()
 #        debug.log("rotation: "+str(self.beam.sprite.rotation))
         
@@ -114,7 +115,7 @@ class Player(entity.Entity):
         timeSinceLastUpdate -- time elapsed since the last time this update was called
         args -- list of arguments to this update method
         kwargs --         
-        """ 
+        """
         #Call super class update
         super(Player,self).update(timeSinceLastUpdate, *args, **kwargs)        
         self.updateKeyAxisState()       
@@ -153,7 +154,7 @@ class Player(entity.Entity):
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
         super(Player,self).notifyCollision(other)
-        print(self.entityName + " collided with " + other.entityName)    
-        
+        print(self.entityName + " collided with " + other.entityName + " at " + str(other.cshape.center))    
+        #other.sprite.visible = False
         
         
