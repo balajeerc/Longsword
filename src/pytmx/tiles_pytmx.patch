@@ -1,0 +1,157 @@
+--- tiles.py.orig	2012-07-14 22:46:09.477427804 +0200
++++ tiles.py	2012-07-15 01:09:19.832906713 +0200
+@@ -56,6 +56,9 @@
+ from cocos.director import director
+ from cocos.rect import Rect
+ 
++import pytmx.pytmx
++import itertools
++
+ # Implement these classes for backwards compatibility; some older code
+ # expects ScrollableLayer and ScrollingManager to be in the tiles module.
+ from cocos import layer
+@@ -227,74 +230,47 @@
+     return resource
+ 
+ def load_tmx(filename):
+-    '''Load some tile mapping resources from a TMX file.
++    '''Load some tile mapping resources from a TMX file
++       using pytmx 
+     '''
+     resource = Resource(filename)
++    
++    tmxdata = pytmx.TiledMap(filename)
+ 
+-    tree = ElementTree.parse(resource.path)
+-    map = tree.getroot()
+-    if map.tag != 'map':
+-        raise ResourceError('document is <%s> instead of <map>'%
+-            map.name)
+-
+-    width = int(map.attrib['width'])
+-    height  = int(map.attrib['height'])
++    width = tmxdata.width
++    height  = tmxdata.height
+ 
+     # XXX this is ASSUMED to be consistent
+-    tile_width = int(map.attrib['tilewidth'])
+-    tile_height = int(map.attrib['tileheight'])
++    tile_width = tmxdata.tileheight
++    tile_height = tmxdata.tileheight
+ 
+     # load all the tilesets
+     tilesets = []
+-    for tag in map.findall('tileset'):
+-        if 'source' in tag.attrib:
+-            firstgid = int(tag.attrib['firstgid'])
+-            path = resource.find_file(tag.attrib['source'])
+-            with open(path) as f:
+-                tag = ElementTree.fromstring(f.read())
+-        else:
+-            firstgid = int(tag.attrib['firstgid'])
+-
+-        name = tag.attrib['name']
+-
+-        for c in tag.getchildren():
+-            if c.tag == "image":
+-                # create a tileset from the image atlas
+-                path = resource.find_file(c.attrib['source'])
+-                tileset = TileSet.from_atlas(name, firstgid, path, tile_width, tile_height)
+-                # TODO consider adding the individual tiles to the resource?
+-                tilesets.append(tileset)
+-                resource.add_resource(name, tileset)
+-            elif c.tag == 'tile':
+-                # add properties to tiles in the tileset
+-                gid = tileset.firstgid + int(c.attrib['id'])
+-                tile = tileset[gid]
+-                props = c.find('properties')
+-                if props is None:
+-                    continue
+-                for p in props.findall('property'):
+-                    # store additional properties.
+-                    name = p.attrib['name']
+-                    value = p.attrib['value']
+-                    # TODO consider more type conversions?
+-                    if value.isdigit():
+-                        value = int(value)
+-                    tile.properties[name] = value
++    
++    for tmx_tileset in tmxdata.tilesets:
++        path = tmx_tileset.source
++        firstgid = tmx_tileset.firstgid
++        name = tmx_tileset.name
++
++        # Not used yet
++        tile_margin = tmx_tileset.margin
++        tile_spacing = tmx_tileset.spacing
++
++        tileset = TileSet.from_atlas(name, firstgid, path, tile_width, tile_height, tmxdata.tile_properties)
++
++        # TODO consider adding the individual tiles to the resource?
++        tilesets.append(tileset)
++        resource.add_resource(name, tileset)
+ 
+     # now load all the layers
+-    for layer in map.findall('layer'):
+-        data = layer.find('data')
+-        if data is None:
+-            raise ValueError('layer %s does not contain <data>' % layer.name)
+-
+-        data = data.text.strip()
+-        data = data.decode('base64').decode('zlib')
+-        data = struct.unpack('<%di' % (len(data)/4,), data)
+-        assert len(data) == width * height
++    for layer in tmxdata.tilelayers:
++        # Convert pytmx layer data array of arrays 
++        # to a flat tuple as cocos expects
++        layer_data = tuple(itertools.chain(*layer.data))
+ 
+         cells = [[None] * height for x in range(width)]
+-        for n, gid in enumerate(data):
+-            if gid < 1:
++        for n, gid in enumerate(layer_data):
++            if gid < firstgid:
+                 tile = None
+             else:
+                 # UGH
+@@ -306,10 +282,10 @@
+             j = height - (n // width + 1)
+             cells[i][j] = RectCell(i, j, tile_width, tile_height, {}, tile)
+ 
+-        id = layer.attrib['name']
++        id = layer.name
+ 
+         m = RectMapLayer(id, tile_width, tile_height, cells, None, {})
+-        m.visible = int(layer.attrib.get('visible', 1))
++        m.visible = int(layer.visible)
+ 
+         resource.add_resource(id, m)
+ 
+@@ -490,7 +466,7 @@
+         return self[id]
+ 
+     @classmethod
+-    def from_atlas(cls, name, firstgid, file, tile_width, tile_height):
++    def from_atlas(cls, name, firstgid, file, tile_width, tile_height, tile_props = None):
+         image = pyglet.image.load(file)
+         rows = image.height / tile_height
+         columns = image.width / tile_width
+@@ -499,9 +475,17 @@
+         id = firstgid
+         ts = cls(name, {})
+         ts.firstgid = firstgid
++        
+         for j in range(rows-1, -1, -1):
+             for i in range(columns):
+-                ts[id] = Tile(id, {}, atlas[j, i])
++                if tile_props:
++                    if id in tile_props:
++                        props = tile_props[id]
++                    else:
++                        props = {}
++                else:
++                    props = {}
++                ts[id] = Tile(id, props, atlas[j, i])
+                 id += 1
+         return ts
+ 

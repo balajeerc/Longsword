@@ -40,9 +40,19 @@ class GameManager():
         cocos.director.director.init(width=640, height=512)
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
-        self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
+        #self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
         #Create a scrolling map manager
         self.scrollingManager = cocos.tiles.ScrollingManager()
+        #Load map resource from tmx file
+        resource = cocos.tiles.load_tmx('radsLevelEdited.tmx')
+        #Load each layer
+        layerNames = ["grass","sky","cobbleStone","trees"]
+        self.bgLayers = []
+        for layerName in layerNames:
+            layer = resource.get_resource(layerName)
+            self.bgLayers.append(layer)
+            self.scrollingManager.add(layer)
+        self.mainLayer = resource.get_resource("main")
         self.scrollingManager.add(self.mainLayer)
         #Make sure that this layer receives input events
         self.mainLayer.is_event_handler = True
