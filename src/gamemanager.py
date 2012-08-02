@@ -37,7 +37,7 @@ class GameManager():
     
     def __init__(self):
         #Initialise the cocos system
-        cocos.director.director.init(width=640, height=512)
+        cocos.director.director.init(width=640, height=512, do_not_scale=True)
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
         #self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')

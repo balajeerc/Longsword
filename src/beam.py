@@ -27,6 +27,7 @@ import util
 
 class BeamSubCollider():
     def __init__(self,center,radius):
+        self.node = cocos.cocosnode.CocosNode()
         self.cshape = cocos.collision_model.CircleShape(center,radius)
         self.beamSubCollider = True
         self.entityName = "beamCollider"
@@ -90,6 +91,9 @@ class Beam(entity.Entity):
             radius = 10
             collider = BeamSubCollider(center,
                                        radius)
+            collider.node.x = center.x
+            collider.node.y = center.y
+            self.sprite.add(collider.node)
             self.subColliders.append(collider)
         self.updateColliderPositions()       
         self.boundsVisible = False
@@ -100,18 +104,22 @@ class Beam(entity.Entity):
             collider.register(gameLayer)
         
     def updateColliderPositions(self):
-        beamOriginX = self.sprite.position[0]-self.sprite.width*0.5*math.cos(self.sprite.rotation*math.pi/180) 
-        beamOriginY = self.sprite.position[1]       
+#        beamOriginX = self.sprite.position[0]-self.sprite.width*0.5*math.cos(self.sprite.rotation*math.pi/180) 
+#        beamOriginY = self.sprite.position[1]       
         #beamOriginX = self.sprite.transform_anchor[0]
         #beamOriginY = self.sprite.transform_anchor[1]
         #print("New location- x:"+str(beamOriginX)+", y:"+str(beamOriginY))
-        cosRot = math.cos(self.sprite.rotation*math.pi*-1/180.0)
-        sinRot = math.sin(self.sprite.rotation*math.pi*-1/180.0)
-        for i in range(len(self.subColliders)):
-            pos = cocos.euclid.Vector2(beamOriginX+i*10*cosRot*2,
-                                       beamOriginY+i*10*sinRot*2)
-            self.subColliders[i].cshape.center = pos
-            self.subColliders[i].updateBounds()
+#        cosRot = math.cos(self.sprite.rotation*math.pi*-1/180.0)
+#        sinRot = math.sin(self.sprite.rotation*math.pi*-1/180.0)
+#        for i in range(len(self.subColliders)):
+#            pos = cocos.euclid.Vector2(beamOriginX+i*10*cosRot*2,
+#                                       beamOriginY+i*10*sinRot*2)
+#            self.subColliders[i].cshape.center = pos
+#            self.subColliders[i].updateBounds()
+        for collider in self.subColliders:
+            collider.cshape.center = cocos.euclid.Vector2(collider.node.x,
+                                                          collider.node.y)
+            print("New location - x:" + str(collider.node.x) + ",y:" + str(collider.node.y))    
             
     def addToCollisionManager(self,collisionManager):
         for collider in self.subColliders:

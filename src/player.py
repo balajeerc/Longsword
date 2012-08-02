@@ -34,7 +34,7 @@ class Player(entity.Entity):
         self.speed = 100.0 #Speed of player movement, in pixels per second
         self.lastKeyPressed = None
         self.beam = beam.Beam()
-        #self.beam.showBounds(True)
+        self.beam.showBounds(True)
         gamemanager.GameManager.getInstance().addEntity(self.beam)
         self.rotationRate = 0.5
                        
@@ -154,7 +154,7 @@ class Player(entity.Entity):
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
         super(Player,self).notifyCollision(other)
-        print(self.entityName + " collided with " + other.entityName + " at " + str(other.cshape.center))    
+        #print(self.entityName + " collided with " + other.entityName + " at " + str(other.cshape.center))    
         #other.sprite.visible = False
         
         
