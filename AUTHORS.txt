@@ -1,0 +1,24 @@
+Code authors
+============
+
+This program was written by the following people:
+ - R.C.Balajee
+
+
+Asset attribution
+=================
+
+Assets were authored by the following people:
+
+Lanea Zimmerman
+ - grass.png
+ - holek.png
+ - treetop.png
+ - trunk.png
+ - princess.png
+
+Charles Sanchez
+ - bat.png
+ - bee.png
+ - big_worm.png
+ - eyeball.png
