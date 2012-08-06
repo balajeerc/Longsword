@@ -22,6 +22,7 @@ import gamemanager
 import entity
 import debug
 import beam
+import explosion
 
 class Player(entity.Entity):
     """Main player for Longsword"""
@@ -34,9 +35,22 @@ class Player(entity.Entity):
         self.speed = 100.0 #Speed of player movement, in pixels per second
         self.lastKeyPressed = None
         self.beam = beam.Beam()
-        self.beam.showBounds(True)
-        gamemanager.GameManager.getInstance().addEntity(self.beam)
-        self.rotationRate = 0.5
+        #self.beam.showBounds(True)
+        self.explosion = explosion.Explosion(cocos.euclid.Vector2(100,100))
+        self.rotationRate = 1.5
+        self.maxRotationBlade = 30.0
+        self.currentFocus = cocos.euclid.Vector2(0.0,0.0)
+        self.score = 0
+        self.scoreDisplay = cocos.text.RichLabel(text='SCORE: 0',
+                                                 position=(100,400),
+                                                 font_size=24,
+                                                 font_name='Outlands Truetype',
+                                                 color=(0,0,0,255))
+    def register(self,gameManager,layer):
+        super(Player,self).register(gameManager,layer)
+        layer.add(self.scoreDisplay)
+        self.gameManager.addEntity(self.beam)
+        self.gameManager.addEntity(self.explosion)
                        
     def registerEventHandlers(self,layer):
         """Sets up input handlers for the player
@@ -68,6 +82,7 @@ class Player(entity.Entity):
         elif key == 100: #D key
             self.keyState["D"] = True
             self.lastKeyPressed = "D"
+        self.updateScore(self.score+1)
             
     def onKeyUp(self, key, modifiers):
         """Key up handler"""
@@ -83,11 +98,13 @@ class Player(entity.Entity):
     def onMouseMove(self, x, y, dx, dy):
         currRotation = self.beam.sprite.rotation
         currRotation += (dy)*self.rotationRate*-1
-        if currRotation > 70.0:
-            currRotation = 70;
-        if currRotation < -70.0:
-            currRotation = 70.0 
-        self.beam.rotateTo(currRotation)   
+        
+        if currRotation > self.maxRotationBlade:
+            currRotation = self.maxRotationBlade;
+        if currRotation < self.maxRotationBlade*-1:
+            currRotation = self.maxRotationBlade*-1 
+        self.beam.rotateTo(currRotation)
+         
 #        debug.clearLog()
 #        debug.log("rotation: "+str(self.beam.sprite.rotation))
         
@@ -122,9 +139,17 @@ class Player(entity.Entity):
         #First, based on input key state, we move the player around
         #self.sprite.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
         #self.sprite.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate         
-        self.translate(self.keyAxisState[0]*self.speed*timeSinceLastUpdate, 
-                       self.keyAxisState[1]*self.speed*timeSinceLastUpdate)
         
+        newPos = cocos.euclid.Vector2(0.0,0.0)
+        newPos.x = self.sprite.x + self.keyAxisState[0]*self.speed*timeSinceLastUpdate
+        newPos.y = self.sprite.y + self.keyAxisState[1]*self.speed*timeSinceLastUpdate
+        if newPos.y > 348.0:
+            newPos.y = 348.0
+        if newPos.y < 30.0:
+            newPos.y = 30.0                
+        self.moveTo(newPos.x, 
+                    newPos.y)
+                        
         #Play corresponding animation
         #We have a certain priority ordering here
         #If the player is moving up, even if he is moving to the left
@@ -134,10 +159,12 @@ class Player(entity.Entity):
         else:
             if not self.currentAnimation:
                 self.playAnimation("walkRight")
-        focus_pt_x = self.sprite.x + 270
-        focus_pt_y = 320
         
-        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(focus_pt_x,focus_pt_y)
+        self.currentFocus.x = self.sprite.x + 270
+        self.currentFocus.y = 256
+        
+        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(self.currentFocus.x,self.currentFocus.y)
+        self.updateScore(self.score)
         
         #Now handle the mouse moves so that the beam is rotated
         #We start by aligning the beam to the player's hand
@@ -150,11 +177,22 @@ class Player(entity.Entity):
             offset = [-4,2]
         self.beam.moveTo(self.sprite.x+beamRect.width*0.5+offset[0],
                           self.sprite.y-beamRect.height*0.5+offset[1])
+        
+        #print("PlayerPos: "+str(self.sprite.x)+","+str(self.sprite.y))
                 
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
         super(Player,self).notifyCollision(other)
-        #print(self.entityName + " collided with " + other.entityName + " at " + str(other.cshape.center))    
-        #other.sprite.visible = False
+        if hasattr(other,"characterType"):
+            if other.characterType == "aliens":
+                debug.clearLog()
+                debug.log("Player collided with alien named "+other.entityName)
         
-        
+    def updateScore(self,newscore):
+        """Updates the score display!"""
+        self.score = newscore
+        self.scoreDisplay.text = "SCORE: " + str(newscore)
+        self.scoreDisplay.x = self.currentFocus.x-350
+        if self.scoreDisplay.x < 10:
+            self.scoreDisplay.x= 10
+        self.scoreDisplay.y = 480  

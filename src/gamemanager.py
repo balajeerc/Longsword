@@ -16,15 +16,15 @@
 #    along with Longsword.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import random
 
 import pyglet
 import cocos
 from cocos import collision_model
 
-import tiled2cocos
-
 import entity
 import player
+import npc
 
 #from cocos import tiles
 #from cocos.director import director
@@ -37,7 +37,7 @@ class GameManager():
     
     def __init__(self):
         #Initialise the cocos system
-        cocos.director.director.init(width=640, height=512, do_not_scale=True)
+        cocos.director.director.init(width=720, height=512, do_not_scale=True)
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
         #self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
@@ -46,7 +46,7 @@ class GameManager():
         #Load map resource from tmx file
         resource = cocos.tiles.load_tmx('radsLevel.tmx')
         #Load each layer
-        layerNames = ["grass","horizongrass","cobblestones","vegetation","fences","forest","forest1"]
+        layerNames = ["grass","horizongrass","cobblestones","vegetation","fences","shrubs","forest","sea","forest1","forest2","coast","details","stall"]
         self.bgLayers = []
         for layerName in layerNames:
             layer = resource.get_resource(layerName)
@@ -64,9 +64,18 @@ class GameManager():
         self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 1200, 0, 480, 128, 128)
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
+        self.fonts = {}
         #Initialise resource paths
         self.initResources()
         GameManager.singletonInstance = self
+        
+        self.humans = ["agent","baldric","duke","fbi","mage","rivera","soldiernormal","soldierzombie"]
+        self.aliens = ["blackrobo", "devilman", "mech1", "mech2", "skeleton", "whiterobo"]
+        self.characterTypes = ["humans","aliens"]
+        self.npcs = [self.humans, self.aliens]
+        self.npcRatio = 0.5
+        self.lastSpawnAt = 0.0
+        self.timer = 0.0
         
     @classmethod
     def getInstance(cls):
@@ -89,22 +98,34 @@ class GameManager():
         pyglet.resource.path = resource_path_list
         pyglet.resource.reindex()
         
+        #Here we also load the fonts
+        pyglet.font.add_file('assets/fonts/outtt.ttf')
+        self.fonts["outlandish"] = pyglet.font.load('Outlands Truetype', bold=True)
+        self.oneSpawn = False
+
     def startGame(self):
         """Starts running the game"""
-        self.debugText = cocos.text.Label("", x=10, y=10,multiline=True)     
+        self.debugText = cocos.text.RichLabel(text="Logging",
+                                              position=(300,10),
+                                              font_size=12,
+                                              font_name='Arial',
+                                              color=(0,0,0,255))     
         self.mainLayer.add(self.debugText)
         
         self.player = player.Player()        
         self.addEntity(self.player)
         self.player.registerEventHandlers(self.mainLayer)
-        self.player.showBounds(True)
         
-        #Test collision with black robot
-        blackRobo = entity.Entity(spawnPt = cocos.euclid.Vector2(640,320))
-        blackRobo.load('assets/aliens/blackRobo')
-        blackRobo.showBounds(True)
-        self.addEntity(blackRobo, self.mainLayer)
-
+        npchar = npc.NPC("baldric","humans",cocos.euclid.Vector2(100.0,100.0))
+        self.addEntity(npchar, self.mainLayer)        
+        self.text = cocos.text.RichLabel(text='Kill aliens without hurting humans!',
+                                         position=(100,200),
+                                         font_size=24,
+                                         font_name='Outlands Truetype',
+                                         color=(0,0,0,255))
+        self.textTimer = 0.0
+        
+        self.mainLayer.add(self.text,z=4)
         cocos.director.director.run(self.mainScene)
                 
     def getMainLayer(self):
@@ -114,14 +135,19 @@ class GameManager():
         return self.scrollingManager
     
     def addEntity(self,entity,layer=None):
+        entityIndx = len(self.entityList)
         self.entityList.append(entity)
         if layer:
-            entity.register(layer)
+            entity.register(self,layer)
         else:
-            entity.register(self.mainLayer)
-            
+            entity.register(self,self.mainLayer)
+    
+    def removeEntity(self,entity):
+        self.entityList.remove(entity)
+        
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
+        self.timer += timeSinceLastUpdate
         self.collisionManager.clear()
         
         #As required by the Cocos collision API, we now add all the
@@ -146,11 +172,32 @@ class GameManager():
                         
         #Now we update the game logic for the entities        
         for entity in self.entityList:
-            if entity.isCollider:
-                entity.update(timeSinceLastUpdate, args, kwargs)
+            entity.update(timeSinceLastUpdate, args, kwargs)
+                
         #Finally, we handle the post collision check updates for the
         #entities    
         for entity in self.entityList:
-            if entity.isCollider or entity.isBeam:
+            if hasattr(entity,'isCollider') or hasattr(entity,'isBeam'):
                 entity.updateCollision()
+        
+        self.textTimer += timeSinceLastUpdate
+        if self.textTimer > 5.0:
+            self.text.visible = False
+        
+        self.debugText.x = self.player.sprite.x+200
+        if self.debugText.x<250:
+            self.debugText.x = 250
             
+        #Spawn npc
+        if (self.timer-self.lastSpawnAt)>2.0 and self.oneSpawn==False:
+            self.lastSpawnAt = self.timer
+            randLoc = cocos.euclid.Vector2(0.0,0.0)
+            randLoc.x = self.player.currentFocus.x + 50
+            randLoc.y = random.randint(30,348)
+            charTypeId = random.randint(0,1)
+            charType = self.characterTypes[charTypeId]
+            entityNameIndx = random.randint(0,len(self.npcs[charTypeId])-1)
+            entityName = self.npcs[charTypeId][entityNameIndx]
+            print("Spawning " + charType + " entity named " + entityName)
+            npchar = npc.NPC(entityName,charType,randLoc)            
+            self.addEntity(npchar, self.mainLayer)

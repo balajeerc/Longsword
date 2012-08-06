@@ -33,7 +33,7 @@ You should now have cocos2d installed into the site-packages directory of your P
 
 You should have a window with a minimalist car running around an abstract looking map.
 
-4. Finally, once you have a working python installation, go inside the Longsword source repository and:
+4. Finally, once you have a working cocos2d installation, go inside the Longsword source repository and:
 
   $ python main.py
 

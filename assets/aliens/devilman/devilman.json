@@ -4,7 +4,7 @@
 	"imageGrids" : 
 	[
 		{
-			"image" : "black_robo.png",
+			"image" : "devilman.png",	
 			"rows" : 4,
 			"columns" : 9,
 			"timePerFrame" : 0.1

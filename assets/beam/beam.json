@@ -1,6 +1,11 @@
 {
 	"isAnimated" : false,
 	"isCollider" : false,
-	"image" : "beam.png",		
-	"colliderExts" : [65,65]
+	"imageGrids" : 
+	[
+		{
+			"image": "beam.png"
+		}	
+	]
 }
+

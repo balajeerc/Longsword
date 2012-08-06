@@ -23,246 +23,297 @@ import cocos
 from cocos import collision_model
 
 class Entity(object):
-	"""An entity in Longsword"""
-	
-	def __init__(self, replicateFrom=None,spawnPt=cocos.euclid.Vector2(0,0)):
-		self.sprite = None	#sprite used to visually depict this entity
-		self.image = None #pyglet image object used to represent this entity
-		self.imageGrid = None #a grid containing this entity's animation frames
-		self.animations = {} #animations defined for this entity, referenced against names
-		self.entityName = "" #name of the entity type
-		self.defaultFrame = 0 #default frame of this entity animation
-		self.isAnimated = False #Indicates if this entity is animated
-		self.colliderExts = [0.0,0.0] #extents of this entity's collider
-		self.currentAnimation = None #Animation currently in progress
-		self.zval = 1 #Z value in layer being added to
-		self.life = 1000.0 #Life for this entity
-		self.isCollider = False #Indicates if this entity responds to collisions
-		self.cshape = None #Collision shape for this entity
-		self.collidingEntities = []	#List of entities that collided with this one at a given update
-		self.boundLines = [] #List of lines used to debug draw this entity's bounds	
-		self.boundsVisible = False #Boolean used to switch on and off the drawing of bounds
-		self.spawnPt = spawnPt
-		
-	def load(self, path):
-		"""Loads a sprite animation from specified directory path. 
-		
-		The directory path must contain both the image file containing
-		the sprite sheet itself and the XML file containing information about
-		animation sequences
-		
-		Keyword arguments:
-		path -- path to directory containing sprite data (sprite sheet and XML)
-		
-		"""
-		descriptorFileName = None		
-		for filename in os.listdir(path):			
-			if os.path.splitext(filename)[1] == ".json":
-				descriptorFileName = filename
-				self.entityName = os.path.splitext(filename)[0]
-				break
-		
-		if not descriptorFileName:			
-			raise Exception("Cannot find descriptor JSON file at specified path!")
-		
-		filepath = os.path.join(path,descriptorFileName)
-		with open(filepath) as file:
-			entityData = json.load(file)	
-		
-		#First load the image
-		self.image = pyglet.resource.image(entityData["image"])
-		self.isAnimated = entityData["isAnimated"]
-		if self.isAnimated:
-			self.imageGrid = pyglet.image.ImageGrid(self.image,
-													entityData["imageGrid"]["rows"],
-													entityData["imageGrid"]["columns"])		
-			defaultTimePerFrame = entityData["imageGrid"]["timePerFrame"]
-			for animationName in entityData["animations"]:
-				sequence = entityData["animations"][animationName]
-				frameSequence = self.imageGrid[sequence["startFrame"]:sequence["endFrame"]]
-				timePerFrame = 1.0
-				if "timePerFrame" in sequence:
-					timePerFrame = sequence["timePerFrame"]
-				else:
-					timePerFrame = defaultTimePerFrame				
-				mustLoop = False
-				if "loop" in sequence:
-					mustLoop = sequence["loop"]
-				animation = pyglet.image.Animation.from_image_sequence(frameSequence,timePerFrame,mustLoop)
-				self.animations[animationName] = [animation,mustLoop]
-			
-			#We also add a still frame that we start the sprite with
-			defaultFrameNumber = entityData["defaultFrame"]
-			self.defaultFrame = self.imageGrid[defaultFrameNumber]
-			
-			#Initialise the sprite with the default frame
-			self.sprite = cocos.sprite.Sprite(self.defaultFrame)
-		else:
-			self.sprite = cocos.sprite.Sprite(self.image)	
-					
-		#self.sprite.schedule_interval(self.update,0.02)
-		self.sprite.position = self.spawnPt
-		self.sprite.on_animation_end = self.registerAnimationEnd
-		
-		if entityData["isCollider"]:
-			self.isCollider = True		
-			self.colliderExts = entityData["colliderExts"][0],entityData["colliderExts"][1]
-#			self.cshape = collision_model.AARectShape(self.sprite.position,
-#													 self.sprite.width*0.5,
-#													 self.sprite.height*0.5)
-			self.cshape = collision_model.CircleShape(cocos.euclid.Vector2(self.sprite.position[0],self.sprite.position[1]),
-													  self.sprite.width*0.5)
-			#self.boundLines = [cocos.draw.Line((0,0),(100,100),(255,255,255,255))]*4
-			self.boundLines = []
-			for i in range(4):
-				self.boundLines.append(cocos.draw.Line((0,0),(100,100),(255,255,255,255)))
-			for line in self.boundLines:
-				line.visible = True
-			self.boundsVisible = True	
-			self.updateBounds()	
-			self.boundsVisible = False
-	
-	def register(self, gameLayer):
-		"""Registers this entity with the specified layer"""
-		gameLayer.add(self.sprite,self.zval)
-		if self.isCollider:
-			for line in self.boundLines:
-				gameLayer.add(line)
-		
-	def update(self, timeSinceLastUpdate, *args, **kwargs):
-		"""Update method repeatedly called on the entity"""
-		#print("Callback occurred at: " + str(timeSinceLastUpdate))
-		pass
+    """An entity in Longsword"""
+    
+    def __init__(self, replicateFrom=None,spawnPt=cocos.euclid.Vector2(0,0)):
+        self.sprite = None    #sprite used to visually depict this entity
+        self.imageGrids = [] #grids containing this entity's animation frames
+        self.animations = {} #animations defined for this entity, referenced against names
+        self.entityName = "" #name of the entity type
+        self.defaultFrame = 0 #default frame of this entity animation
+        self.isAnimated = False #Indicates if this entity is animated
+        self.colliderExts = [0.0,0.0] #extents of this entity's collider
+        self.currentAnimation = None #Animation currently in progress
+        self.zval = 6 #Z value in layer being added to
+        self.life = 1000.0 #Life for this entity
+        self.isCollider = False #Indicates if this entity responds to collisions
+        self.cshape = None #Collision shape for this entity
+        self.collidingEntities = []    #List of entities that collided with this one at a given update
+        self.boundLines = [] #List of lines used to debug draw this entity's bounds    
+        self.boundsVisible = False #Boolean used to switch on and off the drawing of bounds
+        self.spawnPt = spawnPt
+        self.layer = None #The cocos layer that this entity is added to
+        self.gameManager = None #Reference to the game manager
+        
+    def load(self, path):
+        """Loads a sprite animation from specified directory path. 
+        
+        The directory path must contain both the image file containing
+        the sprite sheet itself and the XML file containing information about
+        animation sequences
+        
+        Keyword arguments:
+        path -- path to directory containing sprite data (sprite sheet and XML)
+        
+        """
+        descriptorFileName = None        
+        for filename in os.listdir(path):            
+            if os.path.splitext(filename)[1] == ".json":
+                descriptorFileName = filename
+                self.entityName = os.path.splitext(filename)[0]
+                break
+        
+        if not descriptorFileName:            
+            raise Exception("Cannot find descriptor JSON file at specified path!")
+        
+        filepath = os.path.join(path,descriptorFileName)
+        entityData = None
+        with open(filepath) as file:
+            entityData = json.load(file)        
+        #First load the image
+        self.isAnimated = entityData["isAnimated"]
+        if self.isAnimated:
+            #We start by parsing all the image grids
+            #Note that one of the grids must be assigned as the default grid
+            #If it isn't specified, we simply take the first grid as the default
+            defaultGridIndex = 0
+            for indx,grid in enumerate(entityData["imageGrids"]):
+                imageGridEntry = {}
+                imageGridEntry["image"] = pyglet.resource.image(grid["image"])                
+                imageGridEntry["grid"] = pyglet.image.ImageGrid(imageGridEntry["image"],
+                                                                grid["rows"],
+                                                                grid["columns"])        
+                imageGridEntry["timePerFrame"] = grid["timePerFrame"]
+                if "default" in imageGridEntry.keys():
+                    if imageGridEntry["default"]:
+                        defaultGridIndex = indx
+                self.imageGrids.append(imageGridEntry)
+            
+            if len(self.imageGrids)==0:
+                raise Exception("No image grids found in " + self.entityName + " entity definition file!")
+            
+            #Next we parse all the animations
+            for animationName in entityData["animations"]:
+                animationTrack = entityData["animations"][animationName]
+                #If the grid index was is explicitly specified, we just
+                #use the first image grid for this animation
+                gridIndex = 0
+                if "gridIndex" in animationTrack.keys():
+                    gridIndex = animationTrack["gridIndex"]
+                currImageGrid = self.imageGrids[gridIndex]["grid"]
+                gridTimePerFrame = self.imageGrids[gridIndex]["timePerFrame"]             
+                #We allow 2 ways of allowing frame number specification 
+                #for a particular animation track 
+                frameSequence = None
+                # a)The animation frame numbers can be manually specified, frame by frame
+                if "sequence" in animationTrack:
+                    frameSequence = []
+                    frameNumberList = animationTrack["sequence"]
+                    for frameNumber in frameNumberList:
+                        frameSequence.append(currImageGrid[frameNumber])
+                # b)The animation start frame and end frame can be specified        
+                else:    
+                    frameSequence = currImageGrid[animationTrack["startFrame"]:
+                                                   animationTrack["endFrame"]]
+                
+                #We set the time per frame based on what is specified for the
+                #image grid corresponding to this animation, as well as any
+                #overrides specified in the animation track itself                    
+                timePerFrame = 1.0
+                if "timePerFrame" in animationTrack:
+                    timePerFrame = animationTrack["timePerFrame"]
+                else:
+                    timePerFrame = gridTimePerFrame
+                
+                #Handle looping for the animation
+                mustLoop = False
+                if "loop" in animationTrack:
+                    mustLoop = animationTrack["loop"]
+                animation = pyglet.image.Animation.from_image_sequence(frameSequence,timePerFrame,mustLoop)
+                self.animations[animationName] = [animation,mustLoop]
+            
+            #We also add a still frame that we start the sprite with
+            defaultFrameGridIndex = defaultGridIndex
+            if "gridIndex" in entityData["defaultFrame"].keys():
+                defaultFrameGridIndex = entityData["defaultFrame"]["gridIndex"]
+            defaultFrameNumber = entityData["defaultFrame"]["frame"]
+            self.defaultFrame = self.imageGrids[defaultFrameGridIndex]["grid"][defaultFrameNumber]            
+            #Initialise the sprite with the default frame
+            self.sprite = cocos.sprite.Sprite(self.defaultFrame)
+        
+        else:
+            #Non animated entity
+            staticImageGridEntry = {}
+            staticImageGridEntry["image"] = pyglet.resource.image(entityData["imageGrids"][0]["image"])
+            self.imageGrids.append(staticImageGridEntry)            
+            self.sprite = cocos.sprite.Sprite(self.imageGrids[0]["image"])    
+                    
+        #self.sprite.schedule_interval(self.update,0.02)
+        self.sprite.position = self.spawnPt
+        self.sprite.on_animation_end = self.registerAnimationEnd
+        
+        collider = True
+        if "isCollider" in entityData:
+            collider = entityData["isCollider"] 
 
-	def registerAnimationEnd(self):
-		if not self.currentAnimation:
-			raise Exception("Received animation end notification though there is no animation playing!" +
-								" Something is amiss!")
-		#Check if the current animation is a looping animation
-		#If so, we must ignore the animation end notification	
-		#If not, we register the animation end
-		if not self.animations[self.currentAnimation][1]:	
-			self.currentAnimation = None
-			
-	def playAnimation(self, animationName):
-		"""Plays a particular animation sequence
-		
-		Keyword arguments:
-		animationName -- name of the animation being played
-		
-		"""
-		if not animationName in self.animations:
-			raise Exception("Entity named " + self.entityName + " does not have any animation named " + 
-								animationName + " registered.")
-		self.sprite.image = self.animations[animationName][0]
-		self.currentAnimation = animationName
-				
-	def isAnimationPlaying(self, animationName=None):
-		"""Checks if a particular animation is playing. Returns boolean indicating same.
-		If no animationName has been specified, it returns a boolean indicating if any
-		animation defined for this sprite is in progress.
-		
-		Keyword arguments:
-		animationName -- name of the animation to check for
-		
-		"""
-		if not self.currentAnimation:
-			return False
-		if not animationName==self.currentAnimation:
-			return False
-		return True
-	
-	def stopAnimation(self):
-		"""Stops the animation currently in progress and goes to the default frame"""
-		self.currentAnimation = None
-		self.sprite.image = self.defaultFrame
-			
-	def updateCollision(self):
-		"""Updates the colllision shape, after the game logic phase of game update"""
-		self.collidingEntities[:] = []
-		if self.isCollider:
-			self.cshape.center = cocos.euclid.Vector2(self.sprite.x,self.sprite.y)
-			self.updateBounds()
-	
-	def notifyCollision(self,other):
-		"""Updates the collision lists for colliders"""
-		if self.isCollider:
-			self.collidingEntities.append(other)
-	
-	def translate(self, x, y):
-		"""Translates the given entity by specified amount
-		
-		Keyword arguments:
-		x -- displacement along x direction
-		y -- displacement along y direction
-		
-		"""
-		self.sprite.x += x
-		self.sprite.y += y
-			
-	def moveTo(self, x, y):
-		"""Moves the entity to specified coordinates
-		
-		Keyword arguments:
-		x -- x position of the entitiy
-		y -- y position of the entity
-		
-		"""
-		self.sprite.x = x
-		self.sprite.y = y		
+        if collider:
+            self.isCollider = True        
+            self.colliderExts = entityData["colliderExts"][0],entityData["colliderExts"][1]
+            self.cshape = collision_model.CircleShape(cocos.euclid.Vector2(self.sprite.position[0],self.sprite.position[1]),
+                                                      self.sprite.width*0.25)
+            self.boundLines = []
+            for i in range(4):
+                self.boundLines.append(cocos.draw.Line((0,0),(100,100),(255,255,255,255)))
+            self.updateBounds(True)    
+            self.showBounds(self.boundsVisible)
 
-	def rotateBy(self,angle):
-		"""Rotates this entity by specified angle
-		
-		Keyword arguments:
-		angle -- angle by which this entity must be rotated
-		"""
-		self.sprite.rotation += angle
-			
-	def rotateTo(self,angle):
-		"""Sets the angle of rotation for this sprite
-		
-		Keyword arguments:
-		angle -- angle that this entity's rotation must be set to
-		"""
-		self.sprite.rotation = angle
-			
-	def showBounds(self,show=True):
-		"""Shows or hides the bounds of this entity
-		
-		Keyword arguments:
-		show -- boolean indicating whether the bounds must be shown or hidden
-		"""
-		for line in self.boundLines:
-			line.visible = show
-		self.boundsVisible = show	
-	
-	def updateBounds(self):
-		"""Updates the lines used to debug draw the bounds of this entity"""		
-		#If the bounds are not visible, we dont bother updating
-		#the coordinates
-		if not self.boundsVisible:
-			return
-		minmax = self.cshape.minmax()
-		minx = minmax[0]
-		maxx = minmax[1]
-		miny = minmax[2]
-		maxy = minmax[3]		
-		verts = []
-		verts.append(cocos.euclid.Vector2(minx,miny))
-		verts.append(cocos.euclid.Vector2(maxx,miny))
-		verts.append(cocos.euclid.Vector2(maxx,maxy))
-		verts.append(cocos.euclid.Vector2(minx,maxy))
-		self.boundLines[0].start = verts[0]
-		self.boundLines[0].end = verts[1]		
-		self.boundLines[1].start = verts[1]
-		self.boundLines[1].end = verts[2]
-		self.boundLines[2].start = verts[2]
-		self.boundLines[2].end = verts[3]		
-		self.boundLines[3].start = verts[3]
-		self.boundLines[3].end = verts[0]
-		color = (255,255,255,255)
-		if len(self.collidingEntities)>0:
-			color = cocos.euclid.Vector4(255,0,0,255)
-		for line in self.boundLines:
-			line.color = color
+    def register(self, gameManager, gameLayer):
+        """Registers this entity with the specified layer"""
+        gameLayer.add(self.sprite,self.zval)
+        if self.isCollider:
+            for line in self.boundLines:
+                gameLayer.add(line)
+        self.layer = gameLayer
+        self.gameManager = gameManager
+        
+    def update(self, timeSinceLastUpdate, *args, **kwargs):
+        """Update method repeatedly called on the entity"""
+        #print("Callback occurred at: " + str(timeSinceLastUpdate))
+        pass
+
+    def registerAnimationEnd(self):
+        if not self.currentAnimation:
+            raise Exception("Received animation end notification though there is no animation playing!" +
+                                " Something is amiss!")
+        #Check if the current animation is a looping animation
+        #If so, we must ignore the animation end notification    
+        #If not, we register the animation end
+        if not self.animations[self.currentAnimation][1]:    
+            self.currentAnimation = None
+            
+    def playAnimation(self, animationName):
+        """Plays a particular animation sequence
+        
+        Keyword arguments:
+        animationName -- name of the animation being played
+        
+        """
+        if not animationName in self.animations:
+            raise Exception("Entity named " + self.entityName + " does not have any animation named " + 
+                                animationName + " registered.")
+        self.sprite.image = self.animations[animationName][0]
+        self.currentAnimation = animationName
+                
+    def isAnimationPlaying(self, animationName=None):
+        """Checks if a particular animation is playing. Returns boolean indicating same.
+        If no animationName has been specified, it returns a boolean indicating if any
+        animation defined for this sprite is in progress.
+        
+        Keyword arguments:
+        animationName -- name of the animation to check for
+        
+        """
+        if not self.currentAnimation:
+            return False
+        if not animationName==self.currentAnimation:
+            return False
+        return True
+    
+    def stopAnimation(self):
+        """Stops the animation currently in progress and goes to the default frame"""
+        self.currentAnimation = None
+        self.sprite.image = self.defaultFrame
+            
+    def updateCollision(self):
+        """Updates the colllision shape, after the game logic phase of game update"""
+        self.collidingEntities[:] = []
+        if self.isCollider:
+            self.cshape.center = cocos.euclid.Vector2(self.sprite.x,self.sprite.y)
+            self.updateBounds()
+    
+    def notifyCollision(self,other):
+        """Updates the collision lists for colliders"""
+        if self.isCollider:
+            self.collidingEntities.append(other)
+    
+    def translate(self, x, y):
+        """Translates the given entity by specified amount
+        
+        Keyword arguments:
+        x -- displacement along x direction
+        y -- displacement along y direction
+        
+        """
+        self.sprite.x += x
+        self.sprite.y += y
+            
+    def moveTo(self, x, y):
+        """Moves the entity to specified coordinates
+        
+        Keyword arguments:
+        x -- x position of the entitiy
+        y -- y position of the entity
+        
+        """
+        self.sprite.x = x
+        self.sprite.y = y        
+
+    def rotateBy(self,angle):
+        """Rotates this entity by specified angle
+        
+        Keyword arguments:
+        angle -- angle by which this entity must be rotated
+        """
+        self.sprite.rotation += angle
+            
+    def rotateTo(self,angle):
+        """Sets the angle of rotation for this sprite
+        
+        Keyword arguments:
+        angle -- angle that this entity's rotation must be set to
+        """
+        self.sprite.rotation = angle
+            
+    def showBounds(self,show=True):
+        """Shows or hides the bounds of this entity
+        
+        Keyword arguments:
+        show -- boolean indicating whether the bounds must be shown or hidden
+        """
+        for line in self.boundLines:
+            line.visible = show
+        self.boundsVisible = show    
+    
+    def updateBounds(self, forceUpdate=False):
+        """Updates the lines used to debug draw the bounds of this entity"""        
+        #If the bounds are not visible, we dont bother updating
+        #the coordinates
+        if not self.boundsVisible or not forceUpdate:
+            return
+        minmax = self.cshape.minmax()
+        minx = minmax[0]
+        maxx = minmax[1]
+        miny = minmax[2]
+        maxy = minmax[3]        
+        verts = []
+        verts.append(cocos.euclid.Vector2(minx,miny))
+        verts.append(cocos.euclid.Vector2(maxx,miny))
+        verts.append(cocos.euclid.Vector2(maxx,maxy))
+        verts.append(cocos.euclid.Vector2(minx,maxy))
+        self.boundLines[0].start = verts[0]
+        self.boundLines[0].end = verts[1]        
+        self.boundLines[1].start = verts[1]
+        self.boundLines[1].end = verts[2]
+        self.boundLines[2].start = verts[2]
+        self.boundLines[2].end = verts[3]        
+        self.boundLines[3].start = verts[3]
+        self.boundLines[3].end = verts[0]
+        color = (255,255,255,255)
+        if len(self.collidingEntities)>0:
+            color = cocos.euclid.Vector4(255,0,0,255)
+        for line in self.boundLines:
+            line.color = color
+    
+    def destroy(self):
+        """Removes this entity"""
+        self.layer.remove(self.sprite)

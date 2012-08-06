@@ -9,7 +9,7 @@ Task List:
 2. Setup finite state machine for the player - active, death, reeling, invulnerable states.
 3. Move player with W,A,S,D.
 4. Implement beam extending from player's origin to edge of screen - static sprite for now.
-5. Rotate beam with mouse movement.
+5. Rotate beam with mouse movement. 
 6. Figure out how to do collision detection between sprites and beam.
 7. Sprite entities explode on coming into contact with beam.
 8. Load background map.

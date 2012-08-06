@@ -10,15 +10,48 @@ Asset attribution
 
 Assets were authored by the following people:
 
-Lanea Zimmerman
- - grass.png
- - holek.png
- - treetop.png
- - trunk.png
- - princess.png
 
-Charles Sanchez
- - bat.png
- - bee.png
- - big_worm.png
- - eyeball.png
+Chris Phillips
+ - BRivera--Tree.png
+
+Daniel Eddeland
+ - farming_fishing.png 
+ - fence.png
+
+Casper Nilsson
+ - grassalt_flowers.png
+
+Johann Charlot
+ - tileset01
+
+Jonas Klinger
+ - Mech1Walk.png
+ - Mech2Walk.png
+ - Explosion.png
+ - ArmorWalk.png
+ - Armor2Walk.png
+ - Character1Walk.png
+
+Stephen Challener
+ - mage walking poses sheet copy.png
+ - baldricfrontwalksheet copy.png
+
+Skyler Robert
+ - professor_walk_cycle_no_hat.png
+ - FBI_walk_cycle.png
+
+Juan M Rodriguez
+ - maskman.png
+
+Johannes Sjolund
+ - BODY_skeleton.png
+
+Barbara Rivera & Chris Phillips
+ - femaleelfwalk copy.png
+ - gunnerwalkcycle1.png
+ - malesoldiernormal.png
+ - malesoldierzombie.png
+
+
+
+

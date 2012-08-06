@@ -1,0 +1,25 @@
+{
+	"isAnimated" : true,
+	
+	
+	"imageGrids" :
+	[
+		{
+			"image" : "mech2.png",	
+			"rows" : 4,
+			"columns" : 8,
+			"timePerFrame" : 0.1
+		}
+	],
+	
+	"animations" : {
+		"walkUp" : {"startFrame":24, "endFrame":31, "loop":true},
+		"walkLeft" : {"startFrame":16, "endFrame":23, "timePerFrame":0.1, "loop":true},
+		"walkDown" : {"startFrame":8, "endFrame":15, "loop":true},
+		"walkRight" : {"startFrame":0, "endFrame":7, "loop":true}
+	},
+
+	"defaultFrame" : { "frame":16 },
+	
+	"colliderExts" : [65,65]
+}

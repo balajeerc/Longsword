@@ -2,24 +2,34 @@
 	"isAnimated" : true,
 	
 	"isCollider" : true,
-	
-	"image" : "professorEdited.png",
-	
-	"imageGrid" : {
-
-		"rows" : 4,
-		"columns" : 9,
-		"timePerFrame" : 0.1
-	},
+		
+	"imageGrids" :
+	[ 
+		{
+			"image" : "professorEdited.png",
+			"rows" : 4,
+			"columns" : 9,
+			"timePerFrame" : 0.1,
+			"default" : true
+		},
+		
+		{
+			"image" : "professorHurt.png",
+			"rows" : 1,
+			"columns" : 6,
+			"timePerFrame" : 0.1
+		}		
+	],
 	
 	"animations" : {
 		"walkUp" : {"startFrame":27, "endFrame":35, "loop":true},
 		"walkLeft" : {"startFrame":18, "endFrame":26, "timePerFrame":0.1, "loop":true},
 		"walkDown" : {"startFrame":9, "endFrame":17, "loop":true},
-		"walkRight" : {"startFrame":0, "endFrame":8, "loop":true}
+		"walkRight" : {"startFrame":0, "endFrame":8, "loop":true},
+		"fall" : {"startFrame":0, "endFrame":5, "loop":false, "gridIndex":1 }
 	},
 
-	"defaultFrame" : 8,
+	"defaultFrame" : {"gridIndex":0, "frame": 8},
 	
 	"colliderExts" : [65,65]
 }

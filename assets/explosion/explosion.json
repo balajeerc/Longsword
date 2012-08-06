@@ -1,0 +1,21 @@
+{
+	"isAnimated" : true,
+	
+	"isCollider" : false,
+		
+	"imageGrids" :
+	[
+		{
+			"image" : "explosion.png",
+			"rows" : 5,
+			"columns" : 4,
+			"timePerFrame" : 0.1
+		}
+	],
+	
+	"animations" : {
+		"explode" : {"sequence":[16,17,18,19,12,13,14,15,8,9,10,11,4,5,6,7,0,1,2], "loop":false}
+	},
+
+	"defaultFrame" : { "frame":3 }
+}

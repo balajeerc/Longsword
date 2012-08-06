@@ -1,10 +1,10 @@
 {
 	"isAnimated" : true,
-	
+		
 	"imageGrids" : 
 	[
 		{
-			"image" : "black_robo.png",
+			"image" : "white_robo.png",
 			"rows" : 4,
 			"columns" : 9,
 			"timePerFrame" : 0.1
@@ -18,7 +18,7 @@
 		"walkRight" : {"startFrame":0, "endFrame":8, "loop":true}
 	},
 
-	"defaultFrame" : { "frame":18 },
+	"defaultFrame" : { "frame": 18 },
 	
 	"colliderExts" : [65,65]
 }

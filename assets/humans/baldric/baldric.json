@@ -1,10 +1,10 @@
 {
 	"isAnimated" : true,
-	
+
 	"imageGrids" : 
 	[
 		{
-			"image" : "black_robo.png",
+			"image" : "baldric.png",
 			"rows" : 4,
 			"columns" : 9,
 			"timePerFrame" : 0.1

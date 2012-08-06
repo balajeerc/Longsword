@@ -97,29 +97,27 @@ class Beam(entity.Entity):
             self.subColliders.append(collider)
         self.updateColliderPositions()       
         self.boundsVisible = False
-    
-    def register(self, gameLayer):
-        super(Beam,self).register(gameLayer)
+        
+    def register(self, gameManager, gameLayer):
+        super(Beam,self).register(gameManager, gameLayer)
         for collider in self.subColliders:
             collider.register(gameLayer)
         
     def updateColliderPositions(self):
-#        beamOriginX = self.sprite.position[0]-self.sprite.width*0.5*math.cos(self.sprite.rotation*math.pi/180) 
-#        beamOriginY = self.sprite.position[1]       
-        #beamOriginX = self.sprite.transform_anchor[0]
-        #beamOriginY = self.sprite.transform_anchor[1]
+        beamOriginX = self.sprite.position[0]-self.sprite.width*0.5*math.cos(self.sprite.rotation*math.pi/180) 
+        beamOriginY = self.sprite.position[1]-self.sprite.height*0.5*math.sin(self.sprite.rotation*math.pi/180)       
         #print("New location- x:"+str(beamOriginX)+", y:"+str(beamOriginY))
-#        cosRot = math.cos(self.sprite.rotation*math.pi*-1/180.0)
-#        sinRot = math.sin(self.sprite.rotation*math.pi*-1/180.0)
-#        for i in range(len(self.subColliders)):
-#            pos = cocos.euclid.Vector2(beamOriginX+i*10*cosRot*2,
-#                                       beamOriginY+i*10*sinRot*2)
-#            self.subColliders[i].cshape.center = pos
-#            self.subColliders[i].updateBounds()
-        for collider in self.subColliders:
-            collider.cshape.center = cocos.euclid.Vector2(collider.node.x,
-                                                          collider.node.y)
-            print("New location - x:" + str(collider.node.x) + ",y:" + str(collider.node.y))    
+        cosRot = math.cos(self.sprite.rotation*math.pi*-1/180.0)
+        sinRot = math.sin(self.sprite.rotation*math.pi*-1/180.0)
+        for i in range(len(self.subColliders)):
+            pos = cocos.euclid.Vector2(beamOriginX+i*10*cosRot*2,
+                                       beamOriginY+i*10*sinRot*2)
+            self.subColliders[i].cshape.center = pos
+            self.subColliders[i].updateBounds()
+#        for collider in self.subColliders:
+#            collider.cshape.center = cocos.euclid.Vector2(collider.node.x,
+#                                                          collider.node.y)
+#            print("New location - x:" + str(collider.node.x) + ",y:" + str(collider.node.y))    
             
     def addToCollisionManager(self,collisionManager):
         for collider in self.subColliders:
@@ -129,9 +127,16 @@ class Beam(entity.Entity):
         for collider in self.subColliders:
             collider.showBounds(show)
         self.boundsVisible = show    
-
+    
+    def notifyCollision(self,other):
+        """Updates the collision lists for colliders"""
+        super(Beam,self).notifyCollision(other)
+        if not other.entityName=="player" and not other.entityName=="beamCollider":
+            #print("Beam hit " + other.entityName)
+            #other.sprite.visible = False
+            pass
+        
     def updateCollision(self):
         """Updates the colllision shape, after the game logic phase of game update"""
         super(Beam,self).updateCollision()
         self.updateColliderPositions()
-         
