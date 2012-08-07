@@ -102,6 +102,7 @@ class Beam(entity.Entity):
         super(Beam,self).register(gameManager, gameLayer)
         for collider in self.subColliders:
             collider.register(gameLayer)
+        self.player = self.gameManager.player
         
     def updateColliderPositions(self):
         beamOriginX = self.sprite.position[0]-self.sprite.width*0.5*math.cos(self.sprite.rotation*math.pi/180) 
@@ -130,12 +131,14 @@ class Beam(entity.Entity):
     
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
-        super(Beam,self).notifyCollision(other)
-        if not other.entityName=="player" and not other.entityName=="beamCollider":
-            #print("Beam hit " + other.entityName)
-            #other.sprite.visible = False
-            pass
-        
+        super(Beam,self).notifyCollision(other)        
+        if hasattr(other,"characterType"):
+            if other.characterType == "aliens":
+                self.player.updateScore(self.player.score+100)
+            else:
+                self.player.updateScore(self.player.score-200)   
+            other.kill()
+
     def updateCollision(self):
         """Updates the colllision shape, after the game logic phase of game update"""
         super(Beam,self).updateCollision()

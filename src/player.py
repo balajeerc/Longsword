@@ -178,16 +178,13 @@ class Player(entity.Entity):
         self.beam.moveTo(self.sprite.x+beamRect.width*0.5+offset[0],
                           self.sprite.y-beamRect.height*0.5+offset[1])
         
-        #print("PlayerPos: "+str(self.sprite.x)+","+str(self.sprite.y))
+        debug.clearLog()
+        debug.log("Player pos- x:" + str(self.sprite.x) + ", y:" + str(self.sprite.y) )
                 
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
         super(Player,self).notifyCollision(other)
-        if hasattr(other,"characterType"):
-            if other.characterType == "aliens":
-                debug.clearLog()
-                debug.log("Player collided with alien named "+other.entityName)
-        
+                
     def updateScore(self,newscore):
         """Updates the score display!"""
         self.score = newscore
@@ -195,4 +192,5 @@ class Player(entity.Entity):
         self.scoreDisplay.x = self.currentFocus.x-350
         if self.scoreDisplay.x < 10:
             self.scoreDisplay.x= 10
-        self.scoreDisplay.y = 480  
+        self.scoreDisplay.y = 480
+        

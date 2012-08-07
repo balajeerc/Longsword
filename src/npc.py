@@ -14,9 +14,13 @@
 #    
 #    You should have received a copy of the GNU General Public License
 #    along with Longsword.  If not, see <http://www.gnu.org/licenses/>.
+
+import cocos
+
 import entity
 import debug
 import beam
+import explosion
 
 class NPC(entity.Entity):
     
@@ -26,7 +30,12 @@ class NPC(entity.Entity):
         self.speed = 100.0
         self.characterType = characterType
         self.zval = 3
+        self.explosion = explosion.Explosion(cocos.euclid.Vector2(pt.x,pt.y))
         
+    def register(self,gameManager,layer):
+        super(NPC,self).register(gameManager,layer)
+        self.gameManager.addEntity(self.explosion)
+
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         """Update method for NPC in Longsword
         
@@ -39,4 +48,22 @@ class NPC(entity.Entity):
         super(NPC,self).update(timeSinceLastUpdate, *args, **kwargs)
         self.translate(self.speed*timeSinceLastUpdate*-1, 0.0)
         if not self.currentAnimation:
-            self.playAnimation("walkLeft")
+            self.playAnimation("walkLeft")        
+        #Move the explosion
+        self.explosion.moveTo(self.sprite.x, self.sprite.y)
+        #If the NPC is too far left off the player, remove it
+        if (self.sprite.x-self.gameManager.player.sprite.x) < -500:
+            self.gameManager.removeEntity(self)        
+    
+    def destroy(self):
+        """Removes this entity"""
+        super(NPC,self).destroy()
+        
+    def kill(self):
+        """Kills this NPC due to being struck by player's blade"""
+        if self.isDead:
+            return
+        #print("Killing NPC named "+self.entityName)
+        self.isDead = True
+        self.explosion.explode()
+        self.gameManager.removeEntity(self)       

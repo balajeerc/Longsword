@@ -38,15 +38,18 @@ class GameManager():
     def __init__(self):
         #Initialise the cocos system
         cocos.director.director.init(width=720, height=512, do_not_scale=True)
+        
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
         #self.mainLayer = tiled2cocos.load_map('assets/maps/level1.tmx')
         #Create a scrolling map manager
         self.scrollingManager = cocos.tiles.ScrollingManager()
+        
         #Load map resource from tmx file
-        resource = cocos.tiles.load_tmx('radsLevel.tmx')
+        resource = cocos.tiles.load_tmx('gameLevel.tmx')
         #Load each layer
-        layerNames = ["grass","horizongrass","cobblestones","vegetation","fences","shrubs","forest","sea","forest1","forest2","coast","details","stall"]
+        layerNames = ["grass","horizongrass","cobblestones","vegetation","fences",
+                      "shrubs","forest","sea","forest1","forest2","coast","details","stall"]
         self.bgLayers = []
         for layerName in layerNames:
             layer = resource.get_resource(layerName)
@@ -54,8 +57,10 @@ class GameManager():
             self.scrollingManager.add(layer)
         self.mainLayer = resource.get_resource("main")
         self.scrollingManager.add(self.mainLayer)
+        
         #Make sure that this layer receives input events
         self.mainLayer.is_event_handler = True
+        
         #Create the main scene
         self.mainScene = cocos.scene.Scene(self.scrollingManager)
         #Create a list to store all entities in scene
@@ -64,11 +69,16 @@ class GameManager():
         self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 1200, 0, 480, 128, 128)
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
+        
+        #Create storage for fonts and images
         self.fonts = {}
+        self.imagePool = {}
+        
         #Initialise resource paths
         self.initResources()
         GameManager.singletonInstance = self
         
+        #Game logic related variables
         self.humans = ["agent","baldric","duke","fbi","mage","rivera","soldiernormal","soldierzombie"]
         self.aliens = ["blackrobo", "devilman", "mech1", "mech2", "skeleton", "whiterobo"]
         self.characterTypes = ["humans","aliens"]
@@ -76,6 +86,7 @@ class GameManager():
         self.npcRatio = 0.5
         self.lastSpawnAt = 0.0
         self.timer = 0.0
+        self.zombieQueue = []
         
     @classmethod
     def getInstance(cls):
@@ -91,6 +102,7 @@ class GameManager():
         currentDirectory = os.path.dirname(os.path.realpath(__file__))
         rootDirectory = os.path.dirname(currentDirectory)
         assetDirectory = os.path.join(rootDirectory,'assets')
+        
         #Pyglet does not recursively search sub-directories, so we walk the hierarchy
         for rootFolder, subFolders, files in os.walk(assetDirectory):
             resource_path_list.append(rootFolder[rootFolder.find("assets"):])
@@ -127,24 +139,7 @@ class GameManager():
         
         self.mainLayer.add(self.text,z=4)
         cocos.director.director.run(self.mainScene)
-                
-    def getMainLayer(self):
-        return self.mainLayer    
-    
-    def getScrollingManager(self):
-        return self.scrollingManager
-    
-    def addEntity(self,entity,layer=None):
-        entityIndx = len(self.entityList)
-        self.entityList.append(entity)
-        if layer:
-            entity.register(self,layer)
-        else:
-            entity.register(self,self.mainLayer)
-    
-    def removeEntity(self,entity):
-        self.entityList.remove(entity)
-        
+                        
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
         self.timer += timeSinceLastUpdate
@@ -161,6 +156,13 @@ class GameManager():
                 
         #Handle all collisions between entities
         for firstObject, secondObject in self.collisionManager.iter_all_collisions():
+#            strId1 = "Beam"
+#            strId2 = "Beam"
+#            if hasattr(firstObject,"entityId"):
+#                strId1 = str(firstObject.entityId)
+#            if hasattr(secondObject,"entityId"):
+#                strId2 = str(secondObject.entityId)
+#            print("Checking between "+strId1+" and "+strId2)        
             if firstObject.isCollider:
                 firstObject.notifyCollision(secondObject)
             elif firstObject.beamSubCollider:
@@ -169,6 +171,12 @@ class GameManager():
                 secondObject.notifyCollision(firstObject)
             elif secondObject.beamSubCollider:    
                 self.player.beam.notifyCollision(firstObject)
+        
+        #Once all collisions are over, we remove all the entities
+        #that were marked as killed because collisions with other
+        #entities (like the beam). We can now clear this
+        #queue of zombie actors from game manager
+        self.clearDeadEntities()
                         
         #Now we update the game logic for the entities        
         for entity in self.entityList:
@@ -198,6 +206,42 @@ class GameManager():
             charType = self.characterTypes[charTypeId]
             entityNameIndx = random.randint(0,len(self.npcs[charTypeId])-1)
             entityName = self.npcs[charTypeId][entityNameIndx]
-            print("Spawning " + charType + " entity named " + entityName)
+            #print("Spawning " + charType + " entity named " + entityName)
             npchar = npc.NPC(entityName,charType,randLoc)            
             self.addEntity(npchar, self.mainLayer)
+            
+    def getMainLayer(self):
+        """Returns a reference to the main layer"""
+        return self.mainLayer    
+    
+    def getScrollingManager(self):
+        """Returns a reference to the scrolling manager"""
+        return self.scrollingManager
+    
+    def addEntity(self,entity,layer=None):
+        """Adds entity to the game manager
+        
+        Keyword arguments:
+        entity -- entity to be added to scene
+        layer -- layer that this entity needs to be added into
+        """
+        entityIndx = len(self.entityList)
+        self.entityList.append(entity)
+        if layer:
+            entity.register(self,layer)
+        else:
+            entity.register(self,self.mainLayer)
+    
+    def removeEntity(self,entityRemoved):
+        """Removes specified entity from game manager
+        
+        Keyword arguments:
+        entityRemoved -- entity to be removed
+        """
+        self.zombieQueue.append(entityRemoved)
+        
+    def clearDeadEntities(self):
+        for zombie in self.zombieQueue:
+            zombie.destroy()
+            self.entityList.remove(zombie)
+        self.zombieQueue = []    
