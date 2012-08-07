@@ -70,6 +70,9 @@ class Entity(object):
 
         self.entityId = Entity.entityIdCounter
         Entity.entityIdCounter += 1
+    
+#    def __del__(self):
+#        print("Destroying id:"+str(self.entityId))
         
     def load(self, path):
         """Loads a sprite animation from specified directory path. 
@@ -256,9 +259,9 @@ class Entity(object):
     def register(self, gameManager, gameLayer):
         """Registers this entity with the specified layer"""
         gameLayer.add(self.sprite,self.zval)
-        if self.isCollider:
-            for line in self.boundLines:
-                gameLayer.add(line)
+#        if self.isCollider:
+#            for line in self.boundLines:
+#                gameLayer.add(line)
         self.layer = gameLayer
         self.gameManager = gameManager
         
@@ -301,8 +304,9 @@ class Entity(object):
         """
         if not self.currentAnimation:
             return False
-        if not animationName==self.currentAnimation:
-            return False
+        if animationName:
+            if not animationName==self.currentAnimation:
+                return False
         return True
     
     def stopAnimation(self):
@@ -405,12 +409,13 @@ class Entity(object):
         if not self.sprite:
             raise Exception("Unable to find sprite of the entity named " + self.entityName)        
         #Attempting to remove sprite from layer
-        #print("Removing entity with id:" + str(self.entityId) + " with name " + self.entityName)
-
         self.layer.remove(self.sprite)
         #As long as this object is not a protypal instance
         #we can delete the sprite and cshape objects
+#        if self.isCollider:
+#            for line in self.boundLines:
+#                self.layer.remove(line)
+#        del self.boundLines        
         if not self.isPrototype:
             self.sprite = None
             self.cshape = None
-        #print("Finished removing entity with id" + str(self.entityId))    

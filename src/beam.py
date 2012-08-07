@@ -38,6 +38,7 @@ class BeamSubCollider():
         #This beam sub-collider is a not a collider as are the regular
         #entity colliders, hence
         self.isCollider = False
+        self.batchNode = cocos.batch.BatchNode()
         
     def getCirclePts(self):
         offsetPts = []
@@ -70,8 +71,10 @@ class BeamSubCollider():
         self.boundsVisible = show
             
     def register(self,gameLayer):
-        for line in self.boundLines:
-            gameLayer.add(line)     
+        pass
+#        for line in self.boundLines:
+#            #self.batchNode.add(line)
+#            gameLayer.add(line)     
             
 class Beam(entity.Entity):
     """Player's beam for Longsword"""

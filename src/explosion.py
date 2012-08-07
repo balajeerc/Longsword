@@ -41,10 +41,10 @@ class Explosion(entity.Entity):
         """
         #Call super class update
         super(Explosion,self).update(timeSinceLastUpdate, *args, **kwargs)
-#        if self.exploded and not self.isAnimationPlaying():
-#            self.stopAnimation()
-#            self.gameManager.removeEntity(self)
-            
+        if self.exploded and not self.isAnimationPlaying():
+            self.stopAnimation()
+            self.gameManager.removeEntity(self)
+                        
     def destroy(self):
         """Destroys this entity"""
         super(Explosion,self).destroy()

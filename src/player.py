@@ -163,7 +163,8 @@ class Player(entity.Entity):
         self.currentFocus.x = self.sprite.x + 270
         self.currentFocus.y = 256
         
-        gamemanager.GameManager.getInstance().getScrollingManager().set_focus(self.currentFocus.x,self.currentFocus.y)
+        self.gameManager.getScrollingManager().set_focus(self.currentFocus.x,
+                                                         self.currentFocus.y)
         self.updateScore(self.score)
         
         #Now handle the mouse moves so that the beam is rotated
@@ -178,8 +179,8 @@ class Player(entity.Entity):
         self.beam.moveTo(self.sprite.x+beamRect.width*0.5+offset[0],
                           self.sprite.y-beamRect.height*0.5+offset[1])
         
-        debug.clearLog()
-        debug.log("Player pos- x:" + str(self.sprite.x) + ", y:" + str(self.sprite.y) )
+#        debug.clearLog()
+#        debug.log("Player pos- x:" + str(self.sprite.x) + ", y:" + str(self.sprite.y) )
                 
     def notifyCollision(self,other):
         """Updates the collision lists for colliders"""
@@ -188,7 +189,7 @@ class Player(entity.Entity):
     def updateScore(self,newscore):
         """Updates the score display!"""
         self.score = newscore
-        self.scoreDisplay.text = "SCORE: " + str(newscore)
+        self.scoreDisplay.element.text = "SCORE: " + str(newscore)
         self.scoreDisplay.x = self.currentFocus.x-350
         if self.scoreDisplay.x < 10:
             self.scoreDisplay.x= 10

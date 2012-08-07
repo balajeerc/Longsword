@@ -25,6 +25,7 @@ from cocos import collision_model
 import entity
 import player
 import npc
+import debug
 
 #from cocos import tiles
 #from cocos.director import director
@@ -37,7 +38,10 @@ class GameManager():
     
     def __init__(self):
         #Initialise the cocos system
-        cocos.director.director.init(width=720, height=512, do_not_scale=True)
+        cocos.director.director.init(width=720,
+                                    height=512,
+                                    do_not_scale=True,
+                                    audio_backend='sdl')
         
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
@@ -48,8 +52,9 @@ class GameManager():
         #Load map resource from tmx file
         resource = cocos.tiles.load_tmx('gameLevel.tmx')
         #Load each layer
-        layerNames = ["grass","horizongrass","cobblestones","vegetation","fences",
-                      "shrubs","forest","sea","forest1","forest2","coast","details","stall"]
+        layerNames = ["grass","horizongrass","cobblestones",
+                      "vegetation","fences","shrubs","forest",
+                      "sea","forest1","forest2","coast","details","stall"]
         self.bgLayers = []
         for layerName in layerNames:
             layer = resource.get_resource(layerName)
@@ -70,9 +75,8 @@ class GameManager():
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
         
-        #Create storage for fonts and images
+        #Create storage for fonts
         self.fonts = {}
-        self.imagePool = {}
         
         #Initialise resource paths
         self.initResources()
@@ -87,7 +91,10 @@ class GameManager():
         self.lastSpawnAt = 0.0
         self.timer = 0.0
         self.zombieQueue = []
-        
+    
+#    def __del__(self):
+#        print("Deleting entity with id: "+str(self.entityId))
+            
     @classmethod
     def getInstance(cls):
         return GameManager.singletonInstance
@@ -139,6 +146,9 @@ class GameManager():
         
         self.mainLayer.add(self.text,z=4)
         cocos.director.director.run(self.mainScene)
+        
+        cocos.audio.pygame.music.load('assets/sounds/music/level1.wav')
+        cocos.audio.pygame.music.play(loops=10)
                         
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
@@ -197,10 +207,10 @@ class GameManager():
             self.debugText.x = 250
             
         #Spawn npc
-        if (self.timer-self.lastSpawnAt)>2.0 and self.oneSpawn==False:
+        if (self.timer-self.lastSpawnAt)>0.5 and self.oneSpawn==False:
             self.lastSpawnAt = self.timer
             randLoc = cocos.euclid.Vector2(0.0,0.0)
-            randLoc.x = self.player.currentFocus.x + 50
+            randLoc.x = self.player.currentFocus.x + 550
             randLoc.y = random.randint(30,348)
             charTypeId = random.randint(0,1)
             charType = self.characterTypes[charTypeId]
@@ -209,7 +219,11 @@ class GameManager():
             #print("Spawning " + charType + " entity named " + entityName)
             npchar = npc.NPC(entityName,charType,randLoc)            
             self.addEntity(npchar, self.mainLayer)
-            
+       
+        debug.clearLog()
+        #debug.log("Number of active entities: "+str(len(self.entityList)))
+        debug.log("Number of main layer children: "+str(len(self.mainLayer.get_children()))) 
+             
     def getMainLayer(self):
         """Returns a reference to the main layer"""
         return self.mainLayer    
@@ -244,4 +258,5 @@ class GameManager():
         for zombie in self.zombieQueue:
             zombie.destroy()
             self.entityList.remove(zombie)
+        del self.zombieQueue    
         self.zombieQueue = []    
