@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Longsword.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import os
 import random
 
@@ -70,7 +71,7 @@ class GameManager():
         #Create a list to store all entities in scene
         self.entityList = []
         #Create a collision manager to respond to collisions
-        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 1200, 0, 480, 128, 128)
+        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 9600, 0, 480, 128, 128)
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
         
@@ -90,7 +91,10 @@ class GameManager():
         self.lastSpawnAt = 0.0
         self.timer = 0.0
         self.zombieQueue = []
-    
+        
+        self.fonts["outlandish"] = pyglet.font.load('Outlands Truetype', bold=True)
+        self.oneSpawn = False
+
 #    def __del__(self):
 #        print("Deleting entity with id: "+str(self.entityId))
             
@@ -105,8 +109,13 @@ class GameManager():
         #and so forth, recursively) in the assets folder and add them to the
         #pyglet resource paths
         resource_path_list = []
-        currentDirectory = os.path.dirname(os.path.realpath(__file__))
-        rootDirectory = os.path.dirname(currentDirectory)
+        rootDirectory = ""
+        if hasattr(sys, "frozen"):
+            encoding = sys.getfilesystemencoding()
+            rootDirectory = os.path.dirname(unicode(sys.executable, encoding))
+        else:
+            currentDirectory = os.path.dirname(os.path.realpath(__file__))
+            rootDirectory = os.path.dirname(currentDirectory)            
         assetDirectory = os.path.join(rootDirectory,'assets')
         
         #Pyglet does not recursively search sub-directories, so we walk the hierarchy
@@ -124,7 +133,6 @@ class GameManager():
         #Here we also load the fonts
         pyglet.font.add_file('assets/fonts/outtt.ttf')
         self.fonts["outlandish"] = pyglet.font.load('Outlands Truetype', bold=True)
-        self.oneSpawn = False
 
     def startGame(self):
         """Starts running the game"""
@@ -226,7 +234,7 @@ class GameManager():
        
         debug.clearLog()
         #debug.log("Number of active entities: "+str(len(self.entityList)))
-        debug.log("Number of main layer children: "+str(len(self.mainLayer.get_children()))) 
+        #debug.log("Number of main layer children: "+str(len(self.mainLayer.get_children()))) 
              
     def getMainLayer(self):
         """Returns a reference to the main layer"""
