@@ -44,7 +44,7 @@ class Entity(object):
         self.entityName = None #name of the entity type
 
         self.sprite = None    #sprite used to visually depict this entity
-        self.zval = 6 #Z value in layer being added to
+        self.zval = 1 #Z value in layer being added to
         self.layer = None #The cocos layer that this entity is added to
 
         self.imageGrids = [] #grids containing this entity's animation frames

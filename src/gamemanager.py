@@ -40,8 +40,7 @@ class GameManager():
         #Initialise the cocos system
         cocos.director.director.init(width=720,
                                     height=512,
-                                    do_not_scale=True,
-                                    audio_backend='sdl')
+                                    do_not_scale=True)
         
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
@@ -114,7 +113,12 @@ class GameManager():
         for rootFolder, subFolders, files in os.walk(assetDirectory):
             resource_path_list.append(rootFolder[rootFolder.find("assets"):])
         #Register the list of paths found
-        pyglet.resource.path = resource_path_list
+        modified_path_list = []
+        #Path separator fix for windows
+        for eachpath in resource_path_list:
+            npath = eachpath.replace('\\','/')
+            modified_path_list.append(npath)
+        pyglet.resource.path = modified_path_list
         pyglet.resource.reindex()
         
         #Here we also load the fonts
@@ -147,8 +151,8 @@ class GameManager():
         self.mainLayer.add(self.text,z=4)
         cocos.director.director.run(self.mainScene)
         
-        cocos.audio.pygame.music.load('assets/sounds/music/level1.wav')
-        cocos.audio.pygame.music.play(loops=10)
+#        cocos.audio.pygame.music.load('assets/sounds/music/level1.wav')
+#        cocos.audio.pygame.music.play(loops=10)
                         
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
