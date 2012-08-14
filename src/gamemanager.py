@@ -15,6 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Longsword.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 import os
 import random
 
@@ -40,8 +41,7 @@ class GameManager():
         #Initialise the cocos system
         cocos.director.director.init(width=720,
                                     height=512,
-                                    do_not_scale=True,
-                                    audio_backend='sdl')
+                                    do_not_scale=True)
         
         #Create the layer into which we'll be adding our sprites
         #self.mainLayer = cocos.layer.ColorLayer(0,0,0,255)
@@ -50,7 +50,7 @@ class GameManager():
         self.scrollingManager = cocos.tiles.ScrollingManager()
         
         #Load map resource from tmx file
-        resource = cocos.tiles.load_tmx('gameLevel.tmx')
+        resource = cocos.tiles.load_tmx('assets/maps/gameLevel.tmx')
         #Load each layer
         layerNames = ["grass","horizongrass","cobblestones",
                       "vegetation","fences","shrubs","forest",
@@ -71,7 +71,7 @@ class GameManager():
         #Create a list to store all entities in scene
         self.entityList = []
         #Create a collision manager to respond to collisions
-        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 3500, 0, 512, 128, 128)
+        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 9600, 0, 480, 128, 128)
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
         
@@ -91,7 +91,10 @@ class GameManager():
         self.lastSpawnAt = 0.0
         self.timer = 0.0
         self.zombieQueue = []
-    
+        
+        self.fonts["outlandish"] = pyglet.font.load('Outlands Truetype', bold=True)
+        self.oneSpawn = False
+
 #    def __del__(self):
 #        print("Deleting entity with id: "+str(self.entityId))
             
@@ -106,21 +109,30 @@ class GameManager():
         #and so forth, recursively) in the assets folder and add them to the
         #pyglet resource paths
         resource_path_list = []
-        currentDirectory = os.path.dirname(os.path.realpath(__file__))
-        rootDirectory = os.path.dirname(currentDirectory)
+        rootDirectory = ""
+        if hasattr(sys, "frozen"):
+            encoding = sys.getfilesystemencoding()
+            rootDirectory = os.path.dirname(unicode(sys.executable, encoding))
+        else:
+            currentDirectory = os.path.dirname(os.path.realpath(__file__))
+            rootDirectory = os.path.dirname(currentDirectory)            
         assetDirectory = os.path.join(rootDirectory,'assets')
         
         #Pyglet does not recursively search sub-directories, so we walk the hierarchy
         for rootFolder, subFolders, files in os.walk(assetDirectory):
             resource_path_list.append(rootFolder[rootFolder.find("assets"):])
         #Register the list of paths found
-        pyglet.resource.path = resource_path_list
+        modified_path_list = []
+        #Path separator fix for windows
+        for eachpath in resource_path_list:
+            npath = eachpath.replace('\\','/')
+            modified_path_list.append(npath)
+        pyglet.resource.path = modified_path_list
         pyglet.resource.reindex()
         
         #Here we also load the fonts
         pyglet.font.add_file('assets/fonts/outtt.ttf')
         self.fonts["outlandish"] = pyglet.font.load('Outlands Truetype', bold=True)
-        self.oneSpawn = False
 
     def startGame(self):
         """Starts running the game"""
@@ -147,8 +159,8 @@ class GameManager():
         self.mainLayer.add(self.text,z=4)
         cocos.director.director.run(self.mainScene)
         
-        cocos.audio.pygame.music.load('assets/sounds/music/level1.wav')
-        cocos.audio.pygame.music.play(loops=10)
+#        cocos.audio.pygame.music.load('assets/sounds/music/level1.wav')
+#        cocos.audio.pygame.music.play(loops=10)
                         
     def update(self, timeSinceLastUpdate, *args, **kwargs):
         #We start by clearing the collision manager
