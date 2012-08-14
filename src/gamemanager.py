@@ -71,7 +71,7 @@ class GameManager():
         #Create a list to store all entities in scene
         self.entityList = []
         #Create a collision manager to respond to collisions
-        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 1200, 0, 480, 128, 128)
+        self.collisionManager = cocos.collision_model.CollisionManagerGrid(0, 3500, 0, 512, 128, 128)
         #Schedule updates at 16 fps on this manager
         self.mainLayer.schedule(self.update)
         
@@ -220,9 +220,9 @@ class GameManager():
             npchar = npc.NPC(entityName,charType,randLoc)            
             self.addEntity(npchar, self.mainLayer)
        
-        debug.clearLog()
+        #debug.clearLog()
         #debug.log("Number of active entities: "+str(len(self.entityList)))
-        debug.log("Number of main layer children: "+str(len(self.mainLayer.get_children()))) 
+        #debug.log("Number of main layer children: "+str(len(self.mainLayer.get_children()))) 
              
     def getMainLayer(self):
         """Returns a reference to the main layer"""
