@@ -49,7 +49,7 @@ class GameManager():
         self.scrollingManager = cocos.tiles.ScrollingManager()
         
         #Load map resource from tmx file
-        resource = cocos.tiles.load_tmx('gameLevel.tmx')
+        resource = cocos.tiles.load_tmx('assets/maps/gameLevel.tmx')
         #Load each layer
         layerNames = ["grass","horizongrass","cobblestones",
                       "vegetation","fences","shrubs","forest",
