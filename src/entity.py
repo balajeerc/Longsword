@@ -21,6 +21,7 @@ import json
 import pyglet
 import cocos
 from cocos import collision_model
+import pymunk
 
 class Entity(object):
     """An entity in Longsword

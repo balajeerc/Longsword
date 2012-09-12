@@ -7,6 +7,9 @@ A simple side scrolling game where you kill aliens with a long blade!
 Do checkout the:
  - Source repository: https://github.com/balajeerc/Longsword
 
+If you only want to play the game on windows, download the build from:
+https://docs.google.com/open?id=0B_3UZN1ZieQgRjlEUUZkNDFycmM
+
 Building and running
 --------------------
 

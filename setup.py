@@ -50,6 +50,7 @@ for rootFolder, subFolders, files in os.walk(currentDirectory):
                 includedFiles.append(incPath)
             
 buildOptions = dict(
+		packages = ["sys","os","json","random","math","pyglet","cocos"],
         excludes = ["Tkinter"],
         include_files = includedFiles
 )
